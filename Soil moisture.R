@@ -24,9 +24,8 @@ SF_Soil_moisture <- Soil_moisture %>%
 
 #SF corrected for temperature will be calculated first
 #Make a new formula for SF corrected
-SF_correction <- formula(x){
-  
-}
+SF_cor <- SF_Soil_moisture %>% 
+  mutate(across(-1:-2, ~ifelse(is.na(.) | is.na(Tair), NA, . / (-0.00149 * (Tair - 4) + 1.014))))
 
 #Now normalize the corrected SF values
 SF_norm <- function(x){
