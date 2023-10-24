@@ -28,20 +28,27 @@ SF_cor <- SF_Soil_moisture %>%
   mutate(across(-1:-2, ~ifelse(is.na(.) | is.na(Tair), NA, . / (-0.00149 * (Tair - 4) + 1.014))))
 
 #Now normalize the corrected SF values
-
+#first get the max values for each collumn using sapply
 Max_values <- sapply(SF_cor, function(x) max(x, na.rm = TRUE))
 SF_norm <- function(x, max_value){
   ifelse(is.na(x), NA, (x/ max_value))
 }
 
+#To prevent issues with length of the columns i remove the first two rows already
 cols_to_normalize <- setdiff(names(SF_cor), c("datetime", "Tair"))
 
+#For the loop to work i already make a new dataframe for SF normalized
 SF_n <- SF_cor
 
+#this loop apply the formula to each column that i specified earlier
+#The max value is taken for each column and specified here what value it should take in the formula
+#I added a check point to make sure the max values are differing
 for(col in cols_to_normalize){
   max_value <- Max_values[col] 
-  SF_n[[col]] <- SF_norm(SF_cor[[col]], max_values)
+  print(max_value)
+  SF_n[[col]] <- SF_norm(SF_cor[[col]], max_value)
 }
+
 
 #Transform to WFPS
 WFPS_cali <- function(x){
