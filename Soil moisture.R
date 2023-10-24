@@ -28,12 +28,20 @@ SF_cor <- SF_Soil_moisture %>%
   mutate(across(-1:-2, ~ifelse(is.na(.) | is.na(Tair), NA, . / (-0.00149 * (Tair - 4) + 1.014))))
 
 #Now normalize the corrected SF values
-SF_norm <- function(x){
-  ifelse(is.na(x), NA, (x/max(x)))
+
+Max_values <- sapply(SF_cor, function(x) max(x, na.rm = TRUE))
+SF_norm <- function(x, max_value){
+  ifelse(is.na(x), NA, (x/ max_value))
 }
 
-SF_n <- SF_cor %>% 
-  mutate(across(-1:-2, ~SF_norm(.)))
+cols_to_normalize <- setdiff(names(SF_cor), c("datetime", "Tair"))
+
+SF_n <- SF_cor
+
+for(col in cols_to_normalize){
+  max_value <- Max_values[col] 
+  SF_n[[col]] <- SF_norm(SF_cor[[col]], max_values)
+}
 
 #Transform to WFPS
 WFPS_cali <- function(x){
