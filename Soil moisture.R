@@ -56,4 +56,52 @@ WFPS_cali <- function(x){
 
 WFPS_Sentek <- SF_n %>% 
   mutate(across(-1:-2, ~WFPS_cali(.)))
+
+#binding dateset can be done with the following function
+new_column_names <- paste(names(WFPS_Sentek), "WFPS", sep = "_")
+colnames(WFPS_Sentek) <- new_column_names
+WFPS_preSM <- rbind(Soil_moisture, WFPS_Sentek)
+
+#some try out plots
+ggplot(WFPS_Sentek) +
+  geom_point(mapping = aes(x = datetime, y = SWC_1_005, color = "5 cm"), size = 0.3) +
+  geom_point(mapping = aes(x = datetime, y = SWC_1_015, color = "15 cm"), size = 0.3) +
+  geom_point(mapping = aes(x = datetime, y = SWC_1_025, color = "25 cm"), size = 0.3) +
+  geom_point(mapping = aes(x = datetime, y = SWC_1_055, color = "55 cm"), size = 0.3) +
+  geom_point(mapping = aes(x = datetime, y = SWC_1_085, color = "85 cm"), size = 0.3) +
+  geom_point(mapping = aes(x = datetime, y = SWC_1_105, color = "105 cm"), size = 0.3) +
+  geom_point(mapping = aes(x = datetime, y = SWC_1_115, color = "115 cm"), size = 0.3) +
+  
+  labs(
+    title = "soil moisture content",
+    x = "date",
+    y = "WFPS (%)",
+  ) +
+  scale_color_manual(
+    values = c("5 cm" = "blue", "15 cm" = "yellow", "25 cm" = "red", "55 cm" = "green", "85 cm" = "orange", "105 cm" = "purple", "115 cm" = "cadetblue"),
+    name = "Depth" )
+
+ggplot(Langeweide_data) +
+  geom_point(mapping = aes(x = datetime, y = SWC_1_005, color = "5 cm"), size = 0.3) +
+  geom_point(mapping = aes(x = datetime, y = SWC_1_015, color = "15 cm"), size = 0.3) +
+  geom_point(mapping = aes(x = datetime, y = SWC_1_025, color = "25 cm"), size = 0.3) +
+  geom_point(mapping = aes(x = datetime, y = SWC_1_055, color = "55 cm"), size = 0.3) +
+  geom_point(mapping = aes(x = datetime, y = SWC_1_085, color = "85 cm"), size = 0.3) +
+  geom_point(mapping = aes(x = datetime, y = SWC_1_105, color = "105 cm"), size = 0.3) +
+  geom_point(mapping = aes(x = datetime, y = SWC_1_115, color = "115 cm"), size = 0.3) +
+  
+  labs(
+    title = "soil moisture content",
+    x = "date",
+    y = "Soil moisture (%)",
+  ) +
+  scale_color_manual(
+    values = c("5 cm" = "blue", "15 cm" = "yellow", "25 cm" = "red", "55 cm" = "green", "85 cm" = "orange", "105 cm" = "purple", "115 cm" = "cadetblue"),
+    name = "Depth" )
+
+
+
+ggplot(Langeweide_data) +
+  geom_point(mapping = aes(x = datetime, y = SWC_1_005, color = "5 cm"), size = 0.3) +
+  geom_point(mapping = aes(x = datetime, y = SWC_1_015, color = "15 cm"), size = 0.3) +
   
