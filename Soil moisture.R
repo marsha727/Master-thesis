@@ -60,7 +60,7 @@ WFPS_Sentek <- SF_n %>%
 #binding dateset can be done with the following function
 new_column_names <- paste(names(WFPS_Sentek), "WFPS", sep = "_")
 colnames(WFPS_Sentek) <- new_column_names
-WFPS_preSM <- rbind(Soil_moisture, WFPS_Sentek)
+WFPS_preSM <- bind_cols(Soil_moisture, WFPS_Sentek)
 
 #some try out plots
 ggplot(WFPS_Sentek) +
