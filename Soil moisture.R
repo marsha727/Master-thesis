@@ -49,7 +49,6 @@ for(col in cols_to_normalize){
   SF_n[[col]] <- SF_norm(SF_cor[[col]], max_value)
 }
 
-
 #Transform to WFPS
 WFPS_cali <- function(x){
   ifelse(is.na(x), NA, 0.7033*x+0.2647)
@@ -57,6 +56,4 @@ WFPS_cali <- function(x){
 
 WFPS_Sentek <- SF_n %>% 
   mutate(across(-1:-2, ~WFPS_cali(.)))
-
-
   
