@@ -61,6 +61,25 @@ WFPS_Sentek <- SF_n %>%
 new_column_names <- paste(names(WFPS_Sentek), "WFPS", sep = "_")
 colnames(WFPS_Sentek) <- new_column_names
 WFPS_preSM <- bind_cols(Soil_moisture, WFPS_Sentek)
+WFPS_SM_n <- bind_cols(SM_n, WFPS_Sentek)
+WFPS_SF_n <- bind_cols(SF_n, WFPS_Sentek)
+
+#Normalizing the soil moisture
+Max_SM <- sapply(Soil_moisture, function(x) max(x, na.rm = TRUE))
+SM_norm <- function(x, max_SM){
+  ifelse(is.na(x), NA, (x/ max_SM))
+}
+
+cols_to_normalize <- setdiff(names(SF_cor), c("datetime", "Tair"))
+
+SM_n <- Soil_moisture
+
+for(col in cols_to_normalize){
+  max_SM <- Max_SM[col] 
+  print(max_value)
+  SM_n[[col]] <- SM_norm(Soil_moisture[[col]], max_SM)
+}
+
 
 #some try out plots
 ggplot(WFPS_Sentek) +
@@ -100,8 +119,41 @@ ggplot(Langeweide_data) +
     name = "Depth" )
 
 
+#checking the soil moisture patterns against WFPS
+ggplot(WFPS_preSM) +
+  geom_point(mapping = aes(x = datetime, y = SWC_1_005, color = "Soil moisture"), size = 0.3) +
+  geom_point(mapping = aes(x = datetime, y = SWC_1_005_WFPS*100, color = "WFPS"), size = 0.3) +
+  labs(
+    title = "Soil moisture vs WFPS at 005 cm",
+    x = "date",
+    y = "Soil moisture or WFPS in %"
+  )
 
-ggplot(Langeweide_data) +
-  geom_point(mapping = aes(x = datetime, y = SWC_1_005, color = "5 cm"), size = 0.3) +
-  geom_point(mapping = aes(x = datetime, y = SWC_1_015, color = "15 cm"), size = 0.3) +
+ggplot(WFPS_preSM, aes(x = SWC_1_025, y = SWC_1_025_WFPS), size = 0.2) +
+  geom_jitter() +
+  geom_smooth(method = "loess", se = TRUE) +
+  labs(
+    title = "correlation between soil moisture and WFPS",
+    x = "Soil moisture",
+    y = "WFPS"
+  )
+
+ggplot(WFPS_SF_n) +
+  geom_point(aes(x = datetime, y = SWC_1_005, color = "Soil moisture"), size = 0.2) +
+  geom_point(aes(x = datetime, y = SWC_1_005_WFPS, color = "WFPS"), size = 0.2) +
+  labs(
+    title = "Dynamics soil moisture normalized and WFPS",
+    x = "Normalizeed soil moisture",
+    y = "WFPS"
+  )
+  
+ggplot(WFPS_SF_n) +
+  geom_point(aes(x = SWC_1_005, y = SWC_1_005_WFPS), size = 0.2) +
+  labs(
+    title = "Correlation normalized SWC and WFPS",
+    x = "Normalized SWC",
+    y = "WFPS"
+  )
+
+
   
