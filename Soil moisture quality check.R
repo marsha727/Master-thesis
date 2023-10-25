@@ -57,7 +57,7 @@ ggplot(All_Soil_moisture) +
   )
 
 #correlation between SWC and WFPS
-ggplot(All_Soil_moisture, aes(x = SWC_1_005, y = SWC_1_005_WFPS), size = 0.2) +
+ggplot(All_Soil_moisture, aes(x = SWC_1_005, y = SWC_1_005_WFPS*100), size = 0.2) +
   geom_jitter() +
   geom_smooth(method = "loess", se = TRUE) +
   labs(
@@ -67,8 +67,8 @@ ggplot(All_Soil_moisture, aes(x = SWC_1_005, y = SWC_1_005_WFPS), size = 0.2) +
   )
 
 #Checking normalized values
-ggplot(WFPS_SF_n) +
-  geom_point(aes(x = datetime, y = SWC_1_005, color = "Soil moisture"), size = 0.2) +
+ggplot(Normalized_Soil_moisture) +
+  geom_point(aes(x = datetime, y = SWC_1_005_SF_N, color = "Soil moisture"), size = 0.2) +
   geom_point(aes(x = datetime, y = SWC_1_005_WFPS, color = "WFPS"), size = 0.2) +
   labs(
     title = "Dynamics soil moisture normalized and WFPS",
@@ -76,12 +76,10 @@ ggplot(WFPS_SF_n) +
     y = "WFPS"
   )
 
-ggplot(WFPS_SF_n) +
-  geom_point(aes(x = SWC_1_005, y = SWC_1_005_WFPS), size = 0.2) +
+ggplot(Normalized_Soil_moisture) +
+  geom_point(aes(x = SWC_1_005_SF_N, y = SWC_1_005_WFPS), size = 0.2) +
   labs(
-    title = "Correlation normalized SWC and WFPS",
-    x = "Normalized SWC",
-    y = "WFPS"
+    title = "Correlation normalized SF and WFPS",
+    x = "Normalized SF (%)",
+    y = "WFPS (%)"
   )
-
-
