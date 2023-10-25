@@ -96,6 +96,10 @@ Sentek_Norm <- bind_cols(Sentek, SM_n, SF_n)
 Sentek_Norm <- Sentek_Norm %>% #remove double columns
   select(-datetime_N, -datetime_SF_N, -Tair_N, -Tair_SF_N)
 
+#Ensures the datetime is in correct formating for writing csv
+Sentek$datetime <- format(Sentek$datetime, format = "%Y-%m-%d %H:%M:%S")
+Sentek_Norm$datetime <- format(Sentek_Norm$datetime, format = "%Y-%m-%d %H:%M:%S")
+
 #Extracting dataset to CSV
-write.csv(Sentek, file = "Langeweide_Sentek.csv", row.names = TRUE)
-write.csv(Sentek_Norm, file = "Langeweide_Sentek_normalized", row.names = TRUE)
+write.csv2(Sentek, file = "Langeweide_Sentek.csv", row.names = TRUE)
+write.csv2(Sentek_Norm, file = "Langeweide_Sentek_normalized.csv", row.names = TRUE)
