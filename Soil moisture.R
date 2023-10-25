@@ -71,19 +71,20 @@ SM_n <- Soil_moisture
 for(col in cols_to_normalize){
   max_SM <- Max_SM[col] 
   print(max_value)
-  SM_n[[col]] <- SM_norm(Soil_moisture[[col]], max_SM)
+  SM_n[[col]] <- SM_norm(SM_n[[col]], max_SM)
 }
 
 #MAke a new dataset that contains SWC, SF and WFPS
 new_column_names_WFPS <- paste(names(WFPS_Sentek), "WFPS", sep = "_") #Give new colnames to differentiate
 colnames(WFPS_Sentek) <- new_column_names_WFPS
-new_column_names_SWC <- paste(names(Soil_moisture), "SWC", sep = "_")
-colnames(WFPS_Sentek) <- new_column_names_SWC
 new_column_names_SF <- paste(names(SF_Soil_moisture), "SF", sep = "_")
+colnames(SF_Soil_moisture) <- new_column_names_SF
 
-Sentek <- bind_cols(WFPS_Sentek, Soil_moisture, SF_Soil_moisture)
+Sentek <- bind_cols(Soil_moisture, SF_Soil_moisture, WFPS_Sentek)
 
-
+#remove double columns
+Sentek <- Sentek %>% 
+  select(-datetime_WFPS, -datetime_SF, -Tair_WFPS, -Tair_SF)
 
 #######################################################################
 #some try out plots
