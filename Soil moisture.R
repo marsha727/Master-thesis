@@ -57,12 +57,6 @@ WFPS_cali <- function(x){
 WFPS_Sentek <- SF_n %>% 
   mutate(across(-1:-2, ~WFPS_cali(.)))
 
-#binding dateset can be done with the following function
-new_column_names <- paste(names(WFPS_Sentek), "WFPS", sep = "_")
-colnames(WFPS_Sentek) <- new_column_names
-WFPS_preSM <- bind_cols(Soil_moisture, WFPS_Sentek)
-WFPS_SM_n <- bind_cols(SM_n, WFPS_Sentek)
-WFPS_SF_n <- bind_cols(SF_n, WFPS_Sentek)
 
 #Normalizing the soil moisture
 Max_SM <- sapply(Soil_moisture, function(x) max(x, na.rm = TRUE))
@@ -80,7 +74,25 @@ for(col in cols_to_normalize){
   SM_n[[col]] <- SM_norm(Soil_moisture[[col]], max_SM)
 }
 
+#binding dateset can be done with the following function
+new_column_names <- paste(names(WFPS_Sentek), "WFPS", sep = "_")
+colnames(WFPS_Sentek) <- new_column_names
+WFPS_preSM <- bind_cols(Soil_moisture, WFPS_Sentek)
+WFPS_SM_n <- bind_cols(SM_n, WFPS_Sentek)
+WFPS_SF_n <- bind_cols(SF_n, WFPS_Sentek)
 
+#MAke a new dataset that contains SWC, SF and WFPS
+new_column_names_WFPS <- paste(names(WFPS_Sentek), "WFPS", sep = "_") #Give new colnames to differentiate
+colnames(WFPS_Sentek) <- new_column_names_WFPS
+new_column_names_SWC <- paste(names(Soil_moisture), "SWC", sep = "_")
+colnames(WFPS_Sentek) <- new_column_names_SWC
+new_column_names_SF <- paste(names(SF_Soil_moisture), "SF", sep = "_")
+
+Sentek <- bind_cols(WFPS_Sentek, Soil_moisture, SF_Soil_moisture)
+
+
+
+#######################################################################
 #some try out plots
 ggplot(WFPS_Sentek) +
   geom_point(mapping = aes(x = datetime, y = SWC_1_005, color = "5 cm"), size = 0.3) +
