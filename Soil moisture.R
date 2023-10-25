@@ -74,13 +74,6 @@ for(col in cols_to_normalize){
   SM_n[[col]] <- SM_norm(Soil_moisture[[col]], max_SM)
 }
 
-#binding dateset can be done with the following function
-new_column_names <- paste(names(WFPS_Sentek), "WFPS", sep = "_")
-colnames(WFPS_Sentek) <- new_column_names
-WFPS_preSM <- bind_cols(Soil_moisture, WFPS_Sentek)
-WFPS_SM_n <- bind_cols(SM_n, WFPS_Sentek)
-WFPS_SF_n <- bind_cols(SF_n, WFPS_Sentek)
-
 #MAke a new dataset that contains SWC, SF and WFPS
 new_column_names_WFPS <- paste(names(WFPS_Sentek), "WFPS", sep = "_") #Give new colnames to differentiate
 colnames(WFPS_Sentek) <- new_column_names_WFPS
