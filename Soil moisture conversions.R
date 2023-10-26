@@ -103,3 +103,13 @@ Sentek_Norm$datetime <- format(Sentek_Norm$datetime, format = "%Y-%m-%d %H:%M:%S
 #Extracting dataset to CSV
 write.csv2(Sentek, file = "Langeweide_Sentek.csv", row.names = TRUE)
 write.csv2(Sentek_Norm, file = "Langeweide_Sentek_normalized.csv", row.names = TRUE)
+
+#test for Precipitation
+Precipitation <- Langeweide_data %>% 
+  select(RAIN, RAIN_NOBV1, RAIN_NOBV2)
+
+P_Soil_moisture <- bind_cols(All_Soil_moisture, Precipitation)
+
+P_Soil_moisture$datetime <- format(P_Soil_moisture$datetime, format = "%Y-%m-%d %H:%M:%S")
+write.csv2(P_Soil_moisture, file = "Langeweide_P_SWC.csv", row.names = TRUE)
+
