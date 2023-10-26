@@ -4,6 +4,9 @@ library(readr)
 All_Soil_moisture <- read.csv2("Transformed/Langeweide_Sentek1.csv")
 All_Soil_moisture$datetime <- as.POSIXct(All_Soil_moisture$datetime, format = "%Y-%m-%d %H:%M:%S")
 
+P_Soil_moisture <- read.csv2("Transformed/Langeweide_P_SWC.csv")
+P_Soil_moisture$datetime <- as.POSIXct(P_Soil_moisture$datetime, format = "%Y-%m-%d %H:%M:%S")
+
 Normalized_Soil_moisture <- read.csv2("Transformed/Langeweide_Sentek_normalized.csv")
 Normalized_Soil_moisture$datetime <- as.POSIXct(Normalized_Soil_moisture$datetime, format = "%Y-%m-%d %H:%M:%S")
 
@@ -82,4 +85,13 @@ ggplot(Normalized_Soil_moisture) +
     title = "Correlation normalized SF and WFPS",
     x = "Normalized SF (%)",
     y = "WFPS (%)"
+  )
+
+ggplot(P_Soil_moisture) +
+  geom_line(aes(x = datetime, y = SWC_1_005_WFPS)) +
+  geom_point(aes(x = datetime, y = RAIN)) +
+  labs(
+    title = "SWC and P",
+    x = "datetime",
+    y = "SWC and P"
   )
