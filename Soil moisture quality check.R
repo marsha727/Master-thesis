@@ -26,6 +26,13 @@ filtered_P_Soil_moisture_D <- P_Soil_moisture_D %>%
 filtered_P_Soil_moisture_D <- filtered_P_Soil_moisture_D %>%
   mutate(SoilMoistureChange = c(0, diff(Daily_SWC_1_005_WFPS)))
 
+#make a subset of WFPS
+WFPS_Subset <- All_Soil_moisture %>% 
+  select(datetime, SWC_1_005_WFPS, SWC_1_015_WFPS, SWC_1_025_WFPS, SWC_1_035_WFPS, SWC_1_045_WFPS, SWC_1_055_WFPS,
+         SWC_1_065_WFPS, SWC_1_075_WFPS, SWC_1_085_WFPS, SWC_1_095_WFPS, SWC_1_105_WFPS, SWC_1_115_WFPS,
+         SWC_3_005_WFPS, SWC_3_015_WFPS, SWC_3_025_WFPS, SWC_3_035_WFPS, SWC_3_045_WFPS, SWC_3_055_WFPS,
+         SWC_3_065_WFPS, SWC_3_075_WFPS, SWC_3_085_WFPS, SWC_3_095_WFPS, SWC_3_105_WFPS, SWC_3_115_WFPS,)
+
 #############################################################
 #Dynamics of WFPS
 ggplot(All_Soil_moisture) +
@@ -124,6 +131,7 @@ ggplot(All_Soil_moisture) +
     x = "Probe 1",
     y = "Probe 3",
   )
+
 
 #Just some graph to check out P and WFPS
 ggplot(P_Soil_moisture_D, aes(x = Date)) +
