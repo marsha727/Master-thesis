@@ -96,12 +96,33 @@ ggplot(Normalized_Soil_moisture) +
     y = "WFPS"
   )
 
+#cor plot between normalized values showing linear relationship
 ggplot(Normalized_Soil_moisture) +
   geom_point(aes(x = SWC_1_005_SF_N, y = SWC_1_005_WFPS), size = 0.2) +
   labs(
     title = "Correlation normalized SF and WFPS",
     x = "Normalized SF (%)",
     y = "WFPS (%)"
+  )
+
+#Checking how probe 1 and 3 compare
+ggplot(All_Soil_moisture) +
+  geom_point(aes(x = datetime, y = SWC_1_005_WFPS, color = "Probe 1"), size = 0.1) +
+  geom_point(aes(x = datetime, y = SWC_3_005_WFPS, color = "Probe 3"), size = 0.1) +
+  labs(
+    title = "Probe 1 vs 3",
+    x = "datetime",
+    y = "WFPS (%)"
+  ) +
+  scale_color_manual(values = c("Probe 1" = "red", "Probe 3" = "blue"))
+
+#Scatterplot generally linear but hysteresis
+ggplot(All_Soil_moisture) +
+  geom_point(aes(x = SWC_1_085_WFPS, y = SWC_3_085_WFPS), size = 0.1)+
+  labs(
+    title = "Cor probe 1 & probe 3",
+    x = "Probe 1",
+    y = "Probe 3",
   )
 
 #Just some graph to check out P and WFPS
