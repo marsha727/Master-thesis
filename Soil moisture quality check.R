@@ -10,6 +10,23 @@ P_Soil_moisture$datetime <- as.POSIXct(P_Soil_moisture$datetime, format = "%Y-%m
 Normalized_Soil_moisture <- read.csv2("Transformed/Langeweide_Sentek_normalized.csv")
 Normalized_Soil_moisture$datetime <- as.POSIXct(Normalized_Soil_moisture$datetime, format = "%Y-%m-%d %H:%M:%S")
 
+#Grouping so i can calculate the sum of daily P
+P_Soil_moisture_D <- P_Soil_moisture %>% 
+  group_by(Year = format(datetime, "%Y"), Month = format(datetime, "%m"), Day = format(datetime, "%d")) %>% 
+  summarize(Daily_P = sum(RAIN), Daily_SWC_1_005_WFPS = mean(SWC_1_005_WFPS)) 
+
+#reattach the date  
+P_Soil_moisture_D$Date <- as.Date(paste(P_Soil_moisture_D$Year, P_Soil_moisture_D$Month, P_Soil_moisture_D$Day, sep = "-"))
+
+#Remove the 0 mm as i am interested in change in SWC to P
+filtered_P_Soil_moisture_D <- P_Soil_moisture_D %>%
+  filter(Daily_P != 0)
+
+#THis calculated the change in SWC every day
+filtered_P_Soil_moisture_D <- filtered_P_Soil_moisture_D %>%
+  mutate(SoilMoistureChange = c(0, diff(Daily_SWC_1_005_WFPS)))
+
+#############################################################
 #Dynamics of WFPS
 ggplot(All_Soil_moisture) +
   geom_point(mapping = aes(x = datetime, y = SWC_1_005_WFPS, color = "5 cm"), size = 0.2) +
@@ -87,11 +104,25 @@ ggplot(Normalized_Soil_moisture) +
     y = "WFPS (%)"
   )
 
-ggplot(P_Soil_moisture) +
-  geom_line(aes(x = datetime, y = SWC_1_005_WFPS)) +
-  geom_point(aes(x = datetime, y = RAIN)) +
+#Just some graph to check out P and WFPS
+ggplot(P_Soil_moisture_D, aes(x = Date)) +
+  geom_line(aes(y = Daily_SWC_1_005_WFPS)) +
+  geom_col(aes(y = Daily_P, fill = "red", size = 1)) +
+  scale_y_continuous(
+    name = "WFPS (%)",
+    limits = c(0, 1),
+    sec.axis = sec_axis(~., name = "Precipitation (mm)", breaks = seq(0, 35, by = 5))
+  ) +
   labs(
-    title = "SWC and P",
+    title = "WFPS and P",
     x = "datetime",
-    y = "SWC and P"
+  )
+
+#Correlation plot WFPS and P
+ggplot(P_Soil_moisture_D) +
+  geom_jitter(aes(x = SoilMoistureChange, y = Daily_P)) +
+  labs(
+    title = "Scatterplot WFPS vs P",
+    x = "WFPS (%)",
+    y = "P (mm)"
   )
