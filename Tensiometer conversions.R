@@ -59,20 +59,21 @@ MvG <- function(x, WCR, WCS, a, n, m){
   print(col_name)
   print(depth)
   
-  matching_range <- which(
-    depth >= Subset_Bodem_fysische_metingen$begindiepte & depth <= Subset_Bodem_fysische_metingen$einddiepte
-  ) #extract the ranges
-  
-  print(matching_range)
-  
-  if(length(matching_range) == 0){
-    stop("No matching range for column", col_name)
-  } #check if range matches with range tensiometer
+matching_rows <- numeric(length(depth))
+
+for(i in 1:length(depth)){
+  depth_value <- depth[i]
+  matching_row <- which(depth_value >= Subset_Bodem_fysische_metingen$begindiepte
+                        & depth_value <= Subset_Bodem_fysische_metingen$einddiepte)
+  matching_rows[i] <- ifelse(length(matching_row) > 0, matching_row = NA)
+}
+
+print(matching_rows)
   
   WCS_d <- Subset_Bodem_fysische_metingen$WCS[matching_range] #extract the right WCS for depth
-  a_d <- Subset_Bodem_fysische_metingen$a[matching_range]
-  n_d <- Subset_Bodem_fysische_metingen$n[matching_range]
-  m_d <- Subset_Bodem_fysische_metingen$m[matching_range]
+  a_d <- Subset_Bodem_fysische_metingen$a[matching_row]
+  n_d <- Subset_Bodem_fysische_metingen$n[matching_row]
+  m_d <- Subset_Bodem_fysische_metingen$m[matching_row]
   
   ifelse(is.na(x), NA, WCS + (WCS - WCR)/((1+abs(a * x^n)^m)))
 }
