@@ -23,6 +23,18 @@ ggplot(Bodem_fysische_metingen) +
 Subset_Bodem_fysische_metingen <- Bodem_fysische_metingen %>% 
   filter(row_number() %in% c(3, 4, 7))
 
+depth_to_interpolate <- 30
+
+interpolated_y <- spline(Subset_Bodem_fysische_metingen$begindiepte, Subset_Bodem_fysische_metingen$WCS, xout = depth_to_interpolate)$y
+
+
+
+
+
+
+
+
+
 #create a range of x_values for each row
 x_ranges <- list()
 
@@ -30,22 +42,3 @@ for (i in 1:nrow(Subset_Bodem_fysische_metingen)) {
   x_ranges[[i]] <- c(Subset_Bodem_fysische_metingen$begindiepte[i], Subset_Bodem_fysische_metingen$einddiepte[i])
 }
 
-WCS_values <- list(c(Subset_Bodem_fysische_metingen$WCS))
-
-interpolate_within_range <- function(x_ranges, WCS_values, x_profile){
-  for(i in 1:length(x_ranges)){
-    if(x_profile >= x_ranges[[i]][1] && x_profile <= x_ranges[[i]][2]){
-      return(WCS_values[i])
-    }
-  }
- return(NA)
-}
-
-
-interp_function <- splinefun(WCS_values, xout = unlist(x_ranges))
-
-x_profile <- c(20, 30, 50, 60)
-
-interpolated_values <- interp_function(x_profile)
-
-interpolated_values <- sapply(x_profile, function(x_profile) interpolate_within_range(x_ranges, WCS_values, x_profile))
