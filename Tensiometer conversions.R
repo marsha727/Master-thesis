@@ -25,7 +25,11 @@ Subset_Bodem_fysische_metingen <- Bodem_fysische_metingen %>%
 
 depth_to_interpolate <- 30
 
-interpolated_y <- spline(Subset_Bodem_fysische_metingen$begindiepte, Subset_Bodem_fysische_metingen$WCS, xout = depth_to_interpolate)$y
+Interpolate_values <- data.frame(x = c(Subset_Bodem_fysische_metingen$begindiepte, Subset_Bodem_fysische_metingen$einddiepte), y = c(Subset_Bodem_fysische_metingen$WCS, Subset_Bodem_fysische_metingen$WCS))
+
+interpolated_y <- spline(Interpolate_values$x, Interpolate_values$y, xout = depth_to_interpolate)$y
+
+
 
 
 
