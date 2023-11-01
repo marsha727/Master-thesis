@@ -13,36 +13,42 @@ kPa_to_cmH2O <- function(x){
 Tensiometer_cmH20 <- Tensiometer %>% 
   mutate(across(.cols = 2:10, ~kPa_to_cmH2O(.)))
 
-#Checking the relationship between depth and WCS
-ggplot(Bodem_fysische_metingen) +
-  geom_point(aes(x = begindiepte, y = WCS))
-
-#Shows non-linear behaviour, interpolation
-
+#non linear interpolation using both start and end depths
 #make a subset of the values i require (I remove NA row manually for now)
 Subset_Bodem_fysische_metingen <- Bodem_fysische_metingen %>% 
   filter(row_number() %in% c(3, 4, 7))
 
 depth_to_interpolate <- 30
 
-Interpolate_values <- data.frame(x = c(Subset_Bodem_fysische_metingen$begindiepte, Subset_Bodem_fysische_metingen$einddiepte), y = c(Subset_Bodem_fysische_metingen$WCS, Subset_Bodem_fysische_metingen$WCS))
+#makes a dataframe so the y value is attached to end and begin depth for all MvG parameters
+#WCS
+Interpolation_WCS <- data.frame(x = c(Subset_Bodem_fysische_metingen$begindiepte, Subset_Bodem_fysische_metingen$einddiepte), y = c(Subset_Bodem_fysische_metingen$WCS, Subset_Bodem_fysische_metingen$WCS))
+interpolated_WCS <- spline(Interpolation_WCS$x, Interpolation_WCS$y, xout = depth_to_interpolate)$y
+#a
+Interpolation_a <- data.frame(x = c(Subset_Bodem_fysische_metingen$begindiepte, Subset_Bodem_fysische_metingen$einddiepte), y = c(Subset_Bodem_fysische_metingen$a, Subset_Bodem_fysische_metingen$a))
+interpolated_a <- spline(Interpolation_a$x, Interpolation_a$y, xout = depth_to_interpolate)$y
+#n
+Interpolation_n <- data.frame(x = c(Subset_Bodem_fysische_metingen$begindiepte, Subset_Bodem_fysische_metingen$einddiepte), y = c(Subset_Bodem_fysische_metingen$n, Subset_Bodem_fysische_metingen$n))
+interpolated_n <- spline(Interpolation_n$x, Interpolation_n$y, xout = depth_to_interpolate)$y
+#m
+Interpolation_m <- data.frame(x = c(Subset_Bodem_fysische_metingen$begindiepte, Subset_Bodem_fysische_metingen$einddiepte), y = c(Subset_Bodem_fysische_metingen$m, Subset_Bodem_fysische_metingen$m))
+interpolated_m <- spline(Interpolation_m$x, Interpolation_m$y, xout = depth_to_interpolate)$y
 
-interpolated_y <- spline(Interpolate_values$x, Interpolate_values$y, xout = depth_to_interpolate)$y
+#make new row to attach to dataset for INT = interpolated values
+new_row <- Subset_Bodem_fysische_metingen %>% 
+  summarize(
+    Locatie = "INT",
+    begindiepte = depth_to_interpolate,
+    einddiepte = depth_to_interpolate,
+    WCS = interpolated_WCS,
+    WCR = 0,
+    a = interpolated_a,
+    n = interpolated_n,
+    m = interpolated_m,
+    across(.cols = -c(Locatie, begindiepte, einddiepte, WCS, WCR, a, n, m), .fns = ~NA)
+  )
+
+Subset_Bodem_fysische_metingen <- rbind(Subset_Bodem_fysische_metingen, new_row)
 
 
-
-
-
-
-
-
-
-
-
-#create a range of x_values for each row
-x_ranges <- list()
-
-for (i in 1:nrow(Subset_Bodem_fysische_metingen)) {
-  x_ranges[[i]] <- c(Subset_Bodem_fysische_metingen$begindiepte[i], Subset_Bodem_fysische_metingen$einddiepte[i])
-}
 
