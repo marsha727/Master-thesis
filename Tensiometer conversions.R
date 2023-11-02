@@ -69,7 +69,7 @@ for(i in 1:length(depth)){
                         & depth_value <= Subset_Bodem_fysische_metingen$einddiepte)
   matching_rows[i] <- ifelse(length(matching_row) > 0, matching_row, NA)
   print(matching_row)
-}
+
 
   WCS <- Subset_Bodem_fysische_metingen$WCS[matching_row]#extract the right WCS for depth
   print(WCS)
@@ -80,8 +80,8 @@ for(i in 1:length(depth)){
   print(n)
   m <- Subset_Bodem_fysische_metingen$m[matching_row]
   print(m)
-  
-  ifelse(is.na(x), NA, WCS + (WCS - WCR)/((1+abs(a * x^n)^m)))
+}
+  ifelse(is.na(x), NA, WCS + ((WCS - WCR)/((1+abs(a * x^n)^m))))
 }
 
 SWC_Tensiometer <- Tensiometer %>% 
