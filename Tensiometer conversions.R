@@ -52,7 +52,7 @@ Subset_Bodem_fysische_metingen <- rbind(Subset_Bodem_fysische_metingen, new_row)
 
 
 #Create the MvG equation for SWC
-MvG <- function(x, WCR, WCS, a, n, m){
+MvG <- function(x, WCS, WCR, a, m ,n){
   col_name <- colnames(Tensiometer_cmH20)
   depth <- as.numeric(sub(".*_(\\d{3})$", "\\1", col_name[-1])) #extracts the number from colname
   
@@ -63,14 +63,16 @@ matching_rows <- numeric(length(depth))
 
 for(i in 1:length(depth)){
   depth_value <- depth[i]
+  print(depth_value)
   matching_row <- which(depth_value >= Subset_Bodem_fysische_metingen$begindiepte
                         & depth_value <= Subset_Bodem_fysische_metingen$einddiepte)
-  matching_rows[i] <- ifelse(length(matching_row) > 0, matching_row = NA)
+  matching_rows[i] <- ifelse(length(matching_row) > 0, matching_row, NA)
+  print(matching_row)
 }
 
-print(matching_rows)
+
   
-  WCS_d <- Subset_Bodem_fysische_metingen$WCS[matching_range] #extract the right WCS for depth
+  WCS_d <- Subset_Bodem_fysische_metingen$WCS[matching_row] #extract the right WCS for depth
   a_d <- Subset_Bodem_fysische_metingen$a[matching_row]
   n_d <- Subset_Bodem_fysische_metingen$n[matching_row]
   m_d <- Subset_Bodem_fysische_metingen$m[matching_row]
