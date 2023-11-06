@@ -29,17 +29,21 @@ Subset_Bodem_fysische_metingen$einddiepte <- as.numeric(Subset_Bodem_fysische_me
 
 #makes a dataframe so the y value is attached to end and begin depth for all MvG parameters
 #WCS
-Interpolation_WCS <- data.frame(x = c(Subset_Bodem_fysische_metingen$begindiepte, Subset_Bodem_fysische_metingen$einddiepte), y = c(Subset_Bodem_fysische_metingen$WCS, Subset_Bodem_fysische_metingen$WCS))
-interpolated_WCS <- spline(Interpolation_WCS$x, Interpolation_WCS$y, xout = depth_to_interpolate)$y
+interpolated_WCS_b <- spline(Subset_Bodem_fysische_metingen$begindiepte, Subset_Bodem_fysische_metingen$WCS, xout = depth_to_interpolate)$y
+interpolated_WCS_e <- spline(Subset_Bodem_fysische_metingen$einddiepte, Subset_Bodem_fysische_metingen$WCS, xout = depth_to_interpolate)$y
+interpolated_WCS = mean(c(interpolated_WCS_b, interpolated_WCS_e))
 #a
-Interpolation_a <- data.frame(x = c(Subset_Bodem_fysische_metingen$begindiepte, Subset_Bodem_fysische_metingen$einddiepte), y = c(Subset_Bodem_fysische_metingen$a, Subset_Bodem_fysische_metingen$a))
-interpolated_a <- spline(Interpolation_a$x, Interpolation_a$y, xout = depth_to_interpolate)$y
+interpolated_a_b <- spline(Subset_Bodem_fysische_metingen$begindiepte, Subset_Bodem_fysische_metingen$a, xout = depth_to_interpolate)$y
+interpolated_a_e <- spline(Subset_Bodem_fysische_metingen$einddiepte, Subset_Bodem_fysische_metingen$a, xout = depth_to_interpolate)$y
+interpolated_a = mean(c(interpolated_a_b, interpolated_a_e))
 #n
-Interpolation_n <- data.frame(x = c(Subset_Bodem_fysische_metingen$begindiepte, Subset_Bodem_fysische_metingen$einddiepte), y = c(Subset_Bodem_fysische_metingen$n, Subset_Bodem_fysische_metingen$n))
-interpolated_n <- spline(Interpolation_n$x, Interpolation_n$y, xout = depth_to_interpolate)$y
+interpolated_n_b <- spline(Subset_Bodem_fysische_metingen$begindiepte, Subset_Bodem_fysische_metingen$n, xout = depth_to_interpolate)$y
+interpolated_n_e <- spline(Subset_Bodem_fysische_metingen$einddiepte, Subset_Bodem_fysische_metingen$n, xout = depth_to_interpolate)$y
+interpolated_n = mean(c(interpolated_n_b, interpolated_n_e))
 #m
-Interpolation_m <- data.frame(x = c(Subset_Bodem_fysische_metingen$begindiepte, Subset_Bodem_fysische_metingen$einddiepte), y = c(Subset_Bodem_fysische_metingen$m, Subset_Bodem_fysische_metingen$m))
-interpolated_m <- spline(Interpolation_m$x, Interpolation_m$y, xout = depth_to_interpolate)$y
+interpolated_m_b <- spline(Subset_Bodem_fysische_metingen$begindiepte, Subset_Bodem_fysische_metingen$m, xout = depth_to_interpolate)$y
+interpolated_m_e <- spline(Subset_Bodem_fysische_metingen$einddiepte, Subset_Bodem_fysische_metingen$m, xout = depth_to_interpolate)$y
+interpolated_m = mean(c(interpolated_m_b, interpolated_m_e))
 
 new_row <- Subset_Bodem_fysische_metingen %>% 
   summarize(
@@ -57,10 +61,10 @@ new_row <- Subset_Bodem_fysische_metingen %>%
 Subset_Bodem_fysische_metingen <- rbind(Subset_Bodem_fysische_metingen, new_row)
 
 ggplot(Subset_Bodem_fysische_metingen) +
-  geom_point(aes(x = begindiepte, y = WCS))
+  geom_point(aes(x = begindiepte, y = WCS)) +
+  geom_point(aes(x = einddiepte, y = WCS)) 
 
-ggplot(Interpolation_WCS) +
-  geom_point(aes(x = x, y = y))
+  
 
 
 #calling values manually because i couldnt get my loop to function
@@ -84,8 +88,8 @@ m3 <- Subset_Bodem_fysische_metingen$m[3]
 
 #doing calculation manually because i couldnt make the loop work
 Tensiometer_cmH20 <- Tensiometer_cmH20 %>% 
-  mutate(MS_TMAP_1_D_020 = WCR1 + ((WCS1 - WCR1)/((1+abs(a1 * MS_TMAP_1_D_020)^n1)^m1))) %>% 
-  mutate(MS_TMAP_2_D_030 = interpolated_WCS + ((interpolated_WCS - WCR1)/((1+abs(interpolated_a * MS_TMAP_2_D_030)^interpolated_n)^interpolated_m))) %>% 
+  mutate(MS_TMAP_1_D_020 = WCR1 + (WCS1 - WCR1)/((1 + abs(a1 * MS_TMAP_1_D_020)^n1)^m1)) %>% 
+  mutate(MS_TMAP_2_D_030 = WCR1 + ((interpolated_WCS - WCR1)/((1+abs(interpolated_a * MS_TMAP_2_D_030)^interpolated_n)^interpolated_m))) %>% 
   mutate(MS_TMAP_3_D_050 = WCR2 + ((WCS2 - WCR2)/((1+abs(a2 * MS_TMAP_3_D_050)^n2)^m2))) %>% 
   
   mutate(MS_TMAP_4_D_020 = WCR1 + ((WCS1 - WCR1)/((1+abs(a1 * MS_TMAP_4_D_020)^n1)^m1))) %>% 
