@@ -50,9 +50,12 @@ new_row <- Subset_Bodem_fysische_metingen %>%
 
 Subset_Bodem_fysische_metingen <- rbind(Subset_Bodem_fysische_metingen, new_row)
 
+#make sure all are numeric that need to be
+Subset_Bodem_fysische_metingen$a <- as.numeric(Subset_Bodem_fysische_metingen$a)
+Subset_Bodem_fysische_metingen$begindiepte <- as.numeric(Subset_Bodem_fysische_metingen$begindiepte)
+Subset_Bodem_fysische_metingen$einddiepte <- as.numeric(Subset_Bodem_fysische_metingen$einddiepte)
 
 #Create the MvG equation for SWC
-Subset_Bodem_fysische_metingen$a <- as.numeric(Subset_Bodem_fysische_metingen$a)
 MvG <- function(x, depth, Subset_Bodem_fysische_metingen){
   matching_rows <- numeric(length(depth))
   SWC_Tensiometer_values <- numeric(length(depth))
@@ -75,6 +78,12 @@ MvG <- function(x, depth, Subset_Bodem_fysische_metingen){
       print(n_local)
       m_local <- Subset_Bodem_fysische_metingen$m[matching_row]
       print(m_local)
+    }else{
+      WCS_local = NA
+      WCR_local = NA
+      a_local = NA
+      n_local = NA
+      m_local = NA
     }
     SWC_Tensiometer_values[i] <- ifelse(is.na(x), NA, WCS_local + ((WCS_local - WCR_local)/((1+abs(a_local * x^n_local)^m_local))))
   }
@@ -86,10 +95,10 @@ Subset_tensio <- Tensiometer_cmH20 %>%
   select(c(2:10))
 
 col_name <- colnames(Tensiometer_cmH20)
-depth <- as.numeric(sub(".*_(\\d{3})$", "\\1", col_name[-1])) #extracts the number from colname
+depth <- as.numeric(sub(".*_(\\d{3})$", "\\1", col_name[-c(1, 11:19)])) #extracts the number from colname
 
 SWC_Tensiometer_values <- Subset_tensio %>% 
-  mutate(across(-c(1,11:19), ~MvG(., depth, Subset_Bodem_fysische_metingen)))
+  mutate(across(everything(), ~MvG(., depth, Subset_Bodem_fysische_metingen)))
 
 
 
