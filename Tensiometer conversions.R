@@ -18,33 +18,17 @@ Tensiometer_cmH20 <- Tensiometer %>%
 Subset_Bodem_fysische_metingen <- Bodem_fysische_metingen %>% 
   filter(row_number() %in% c(3, 4, 7))
 
-depth_to_interpolate <- 30
-
-#makes a dataframe so the y value is attached to end and begin depth for all MvG parameters
-#WCS
-Interpolation_WCS <- data.frame(x = c(Subset_Bodem_fysische_metingen$begindiepte, Subset_Bodem_fysische_metingen$einddiepte), y = c(Subset_Bodem_fysische_metingen$WCS, Subset_Bodem_fysische_metingen$WCS))
-interpolated_WCS <- spline(Interpolation_WCS$x, Interpolation_WCS$y, xout = depth_to_interpolate)$y
-#a
-Interpolation_a <- data.frame(x = c(Subset_Bodem_fysische_metingen$begindiepte, Subset_Bodem_fysische_metingen$einddiepte), y = c(Subset_Bodem_fysische_metingen$a, Subset_Bodem_fysische_metingen$a))
-interpolated_a <- spline(Interpolation_a$x, Interpolation_a$y, xout = depth_to_interpolate)$y
-#n
-Interpolation_n <- data.frame(x = c(Subset_Bodem_fysische_metingen$begindiepte, Subset_Bodem_fysische_metingen$einddiepte), y = c(Subset_Bodem_fysische_metingen$n, Subset_Bodem_fysische_metingen$n))
-interpolated_n <- spline(Interpolation_n$x, Interpolation_n$y, xout = depth_to_interpolate)$y
-#m
-Interpolation_m <- data.frame(x = c(Subset_Bodem_fysische_metingen$begindiepte, Subset_Bodem_fysische_metingen$einddiepte), y = c(Subset_Bodem_fysische_metingen$m, Subset_Bodem_fysische_metingen$m))
-interpolated_m <- spline(Interpolation_m$x, Interpolation_m$y, xout = depth_to_interpolate)$y
-
 #make new row to attach to dataset for INT = interpolated values
 new_row <- Subset_Bodem_fysische_metingen %>% 
   summarize(
     Locatie = "INT",
-    begindiepte = depth_to_interpolate,
-    einddiepte = depth_to_interpolate,
-    WCS = interpolated_WCS,
+    begindiepte = 30,
+    einddiepte = 30,
+    WCS = WCS[1],
     WCR = 0,
-    a = interpolated_a,
-    n = interpolated_n,
-    m = interpolated_m,
+    a = a[1],
+    n = n[1],
+    m = m[1],
     across(.cols = -c(Locatie, begindiepte, einddiepte, WCS, WCR, a, n, m), .fns = ~NA)
   )
 
