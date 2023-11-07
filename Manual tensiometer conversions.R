@@ -67,12 +67,12 @@ WFPS_tensiometer <- Tensiometer_SWC %>%
   mutate(MS_TMAP_3_D_050 = MS_TMAP_3_D_050 / WCS2) %>% 
 
   mutate(MS_TMAP_4_D_020 = MS_TMAP_4_D_020 / WCS1) %>% 
-  mutate(MS_TMAP_5_D_030 = MS_TMAP_5_D_040 / WCS2) %>% 
-  mutate(MS_TMAP_6_D_050 = MS_TMAP_6_D_060 / WCS3) %>% 
+  mutate(MS_TMAP_5_D_040 = MS_TMAP_5_D_040 / WCS2) %>% 
+  mutate(MS_TMAP_6_D_060 = MS_TMAP_6_D_060 / WCS3) %>% 
 
   mutate(MS_TMAP_7_D_020 = MS_TMAP_7_D_020 / WCS1) %>% 
-  mutate(MS_TMAP_8_D_030 = MS_TMAP_8_D_040 / WCS2) %>% 
-  mutate(MS_TMAP_9_D_050 = MS_TMAP_9_D_060 / WCS3)
+  mutate(MS_TMAP_8_D_040 = MS_TMAP_8_D_040 / WCS2) %>% 
+  mutate(MS_TMAP_9_D_060 = MS_TMAP_9_D_060 / WCS3)
 
 
 #Make sure datetime is correct format
@@ -311,7 +311,6 @@ ggplot(WFPS_tensiometer, aes(x = TIMESTAMP)) +
   )
 
 ggplot(WFPS_tensiometer, aes(x = TIMESTAMP)) +
-  geom_line(aes(y = MS_TMAP_3_D_050, color = "Probe 3"), size = 0.3) +
   geom_line(aes(y = MS_TMAP_5_D_040, color = "Probe 5"), size = 0.3) +
   geom_line(aes(y = MS_TMAP_8_D_040, color = "Probe 8"), size = 0.3) +
   labs(
@@ -320,8 +319,8 @@ ggplot(WFPS_tensiometer, aes(x = TIMESTAMP)) +
     y = "WFPS (%)"
   ) +
   scale_color_manual(
-    values = c("Probe 3" = "green",  "Probe 5" = "red", "Probe 8" = "blue"),
-    labels = c("Probe 3",  "Probe 5", "Probe 8"),
+    values = c("Probe 5" = "red", "Probe 8" = "blue"),
+    labels = c("Probe 5", "Probe 8"),
     name = "Probes"
   )  +
   theme(
@@ -350,4 +349,3 @@ ggplot(WFPS_tensiometer, aes(x = TIMESTAMP)) +
   scale_x_datetime(
     labels = scales::date_format("%B")
   )
-
