@@ -1,6 +1,7 @@
 library(tidyverse)
 
-Langeweide_data <- read_csv("Datasets/LAW_MS_ICOS.csv")
+#reading RDS file (until november data)
+Langeweide_data <- readRDS("Datasets/LAW_MS_ICOS.rds")
 
 #extract the soil moisture data from the Langeweide data set seperately
 #currently only access to 2/3 propes
