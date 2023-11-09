@@ -2,7 +2,7 @@ library(terra)
 library(stringr)
 #do not load the tidyverse packages because that has conflicting functions with terra package
 
-Subset_Bodem_fysische_metingen <- read.csv("Datasets/MvG_Bodem_fysische_metingen.csv")
+Subset_Bodem_fysische_metingen <- read.csv2("Datasets/MvG_Bodem_fysische_metingen.csv")
 
 #This sets the paths where the data should be retrieved. The first one is just a folder for raster files
 #from OWASIS and the second one is a shapefile of footprint of EC towers
@@ -88,12 +88,9 @@ OWASIS_BBB <- data.frame(l.df.owasis[["BBB"]])
 OWASIS_BBB <- rename(OWASIS_BBB, BBB = LAW_MS)
 
 #Conversions to WFPS (%)
-WFPS_BBB <- function(x, Subset_Bodem_fysische_metingen){
-  ifelse(na.rm(x), NA, WCS[1] - BBB)
-}
-
 OWASIS_BBB_WFPS <- OWASIS_BBB %>% 
-  mutate(across(-1, ~ WFPS_BBB(.)))
+  mutate(BBB = Subset_Bodem_fysische_metingen$WCS[1] - BBB ) %>% 
+  rename(WFPS = BBB)
 
 
 
