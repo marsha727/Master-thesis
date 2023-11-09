@@ -2,6 +2,8 @@ library(terra)
 library(stringr)
 #do not load the tidyverse packages because that has conflicting functions with terra package
 
+Subset_Bodem_fysische_metingen <- read.csv("Datasets/MvG_Bodem_fysische_metingen.csv")
+
 #This sets the paths where the data should be retrieved. The first one is just a folder for raster files
 #from OWASIS and the second one is a shapefile of footprint of EC towers
 pathOWASISRast <-  "D:/R_master_thesis/Github/Master-thesis/Datasets/OWASIS/TIFF/groenehart/"
@@ -26,7 +28,7 @@ pTowers <- vect(pathTowers)
 #empty list
 lTowi <- list()
 #create a sequence of dates
-lDay <- seq.Date(as.Date("2022-04-02","%Y-%m-%d"),as.Date("2022-07-27","%Y-%m-%d"),by = "1 day")
+lDay <- seq.Date(as.Date("2022-04-02","%Y-%m-%d"),as.Date("2022-07-26","%Y-%m-%d"),by = "1 day")
 #A new data frame with day as variable
 df.owasis <- data.frame(day=lDay)
 
@@ -83,11 +85,18 @@ for(owi in lOWASIS){
 
 #I would like to get my data in the list to a dataframe for camparison later
 OWASIS_BBB <- data.frame(l.df.owasis[["BBB"]])
+OWASIS_BBB <- rename(OWASIS_BBB, BBB = LAW_MS)
 
-start_date <- "2022-04-02"
-end_date <- "2022-07-26"
+#Conversions to WFPS (%)
+WFPS_BBB <- function(x, Subset_Bodem_fysische_metingen){
+  ifelse(na.rm(x), NA, WCS[1] - BBB)
+}
 
-#make sure the selection aligns of the dates
-OWASIS_BBB <- OWASIS_BBB %>% 
-  filter(day >= start_date & day <= end_date)
+OWASIS_BBB_WFPS <- OWASIS_BBB %>% 
+  mutate(across(-1, ~ WFPS_BBB(.)))
 
+
+
+
+
+read.csv2(OWASIS_BBB, file = "Langeweide_OWASIS")
