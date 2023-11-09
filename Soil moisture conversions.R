@@ -112,5 +112,5 @@ Precipitation <- Langeweide_data %>%
 P_Soil_moisture <- bind_cols(Sentek, Precipitation)
 
 P_Soil_moisture$datetime <- format(P_Soil_moisture$datetime, format = "%Y-%m-%d %H:%M:%S")
-write.csv2(P_Soil_moisture, file = "Langeweide_P_SWC.csv", row.names = TRUE)
+write.csv2(P_Soil_moisture, file = "Transformed/Langeweide_P_SWC.csv", row.names = TRUE)
 
