@@ -1,7 +1,7 @@
 library(tidyverse)
 library(readr)
 
-All_Soil_moisture <- read.csv2("Transformed/Langeweide_Sentek1.csv")
+All_Soil_moisture <- read.csv2("Transformed/Langeweide_Sentek.csv")
 All_Soil_moisture$datetime <- as.POSIXct(All_Soil_moisture$datetime, format = "%Y-%m-%d %H:%M:%S")
 
 P_Soil_moisture <- read.csv2("Transformed/Langeweide_P_SWC.csv")
@@ -10,6 +10,7 @@ P_Soil_moisture$datetime <- as.POSIXct(P_Soil_moisture$datetime, format = "%Y-%m
 Normalized_Soil_moisture <- read.csv2("Transformed/Langeweide_Sentek_normalized.csv")
 Normalized_Soil_moisture$datetime <- as.POSIXct(Normalized_Soil_moisture$datetime, format = "%Y-%m-%d %H:%M:%S")
 
+#The following is just for the precipitation part.
 #Grouping so i can calculate the sum of daily P
 P_Soil_moisture_D <- P_Soil_moisture %>% 
   group_by(Year = format(datetime, "%Y"), Month = format(datetime, "%m"), Day = format(datetime, "%d")) %>% 
@@ -36,41 +37,53 @@ WFPS_Subset <- All_Soil_moisture %>%
 #############################################################
 #Dynamics of WFPS
 ggplot(All_Soil_moisture) +
-  geom_point(mapping = aes(x = datetime, y = SWC_1_005_WFPS, color = "5 cm"), size = 0.2) +
-  geom_point(mapping = aes(x = datetime, y = SWC_1_015_WFPS, color = "15 cm"), size = 0.2) +
-  geom_point(mapping = aes(x = datetime, y = SWC_1_025_WFPS, color = "25 cm"), size = 0.2) +
-  geom_point(mapping = aes(x = datetime, y = SWC_1_055_WFPS, color = "55 cm"), size = 0.2) +
-  geom_point(mapping = aes(x = datetime, y = SWC_1_085_WFPS, color = "85 cm"), size = 0.2) +
-  geom_point(mapping = aes(x = datetime, y = SWC_1_105_WFPS, color = "105 cm"), size = 0.2) +
-  geom_point(mapping = aes(x = datetime, y = SWC_1_115_WFPS, color = "115 cm"), size = 0.2) +
-  
+  geom_line(mapping = aes(x = datetime, y = SWC_1_005_WFPS, color = "5 cm"), size = 0.2) +
+  geom_line(mapping = aes(x = datetime, y = SWC_1_015_WFPS, color = "25 cm"), size = 0.2) +
+  geom_line(mapping = aes(x = datetime, y = SWC_1_025_WFPS, color = "45 cm"), size = 0.2) +
+  geom_line(mapping = aes(x = datetime, y = SWC_1_035_WFPS, color = "65 cm"), size = 0.2) +
+  geom_line(mapping = aes(x = datetime, y = SWC_1_045_WFPS, color = "85 cm"), size = 0.2) +
+  geom_line(mapping = aes(x = datetime, y = SWC_1_065_WFPS, color = "65 cm"), size = 0.2) +
+  geom_line(mapping = aes(x = datetime, y = SWC_1_085_WFPS, color = "85 cm"), size = 0.2) +
+  geom_line(mapping = aes(x = datetime, y = SWC_1_105_WFPS, color = "105 cm"), size = 0.2) +
+  geom_line(mapping = aes(x = datetime, y = SWC_1_115_WFPS, color = "115 cm"), size = 0.2) +
   labs(
-    title = "soil moisture content",
+    title = "Water-filled pore space",
     x = "date",
     y = "WFPS (%)",
   ) +
   scale_color_manual(
-    values = c("5 cm" = "blue", "15 cm" = "yellow", "25 cm" = "red", "55 cm" = "green", "85 cm" = "orange", "105 cm" = "purple", "115 cm" = "cadetblue"),
-    name = "Depth" )
+    values = c("5 cm" = "blue", "15 cm" = "yellow", "25 cm" = "red", "35 cm" = "darkgreen", "45 cm" = "orange", "65 cm" = "purple", "85 cm" = "cadetblue", "105 cm" = "pink", "115 cm" = "lightgreen"),
+    labels = c("5 cm", "15 cm", "25 cm", "35 cm", "45 cm", "65 cm", "85 cm", "105 cm", "115 cm"),
+    name = "Depth" 
+  ) +
+  theme(
+    plot.title = element_text(size = 16)
+  )
 
 #Similar plot but for SWC
 ggplot(All_Soil_moisture) +
-  geom_point(mapping = aes(x = datetime, y = SWC_1_005, color = "5 cm"), size = 0.2) +
-  geom_point(mapping = aes(x = datetime, y = SWC_1_015, color = "15 cm"), size = 0.2) +
-  geom_point(mapping = aes(x = datetime, y = SWC_1_025, color = "25 cm"), size = 0.2) +
-  geom_point(mapping = aes(x = datetime, y = SWC_1_055, color = "55 cm"), size = 0.2) +
-  geom_point(mapping = aes(x = datetime, y = SWC_1_085, color = "85 cm"), size = 0.2) +
-  geom_point(mapping = aes(x = datetime, y = SWC_1_105, color = "105 cm"), size = 0.2) +
-  geom_point(mapping = aes(x = datetime, y = SWC_1_115, color = "115 cm"), size = 0.2) +
-  
+  geom_line(mapping = aes(x = datetime, y = SWC_1_005, color = "5 cm"), size = 0.2) +
+  geom_line(mapping = aes(x = datetime, y = SWC_1_015, color = "25 cm"), size = 0.2) +
+  geom_line(mapping = aes(x = datetime, y = SWC_1_025, color = "45 cm"), size = 0.2) +
+  geom_line(mapping = aes(x = datetime, y = SWC_1_035, color = "65 cm"), size = 0.2) +
+  geom_line(mapping = aes(x = datetime, y = SWC_1_045, color = "85 cm"), size = 0.2) +
+  geom_line(mapping = aes(x = datetime, y = SWC_1_065, color = "65 cm"), size = 0.2) +
+  geom_line(mapping = aes(x = datetime, y = SWC_1_085, color = "85 cm"), size = 0.2) +
+  geom_line(mapping = aes(x = datetime, y = SWC_1_105, color = "105 cm"), size = 0.2) +
+  geom_line(mapping = aes(x = datetime, y = SWC_1_115, color = "115 cm"), size = 0.2) +
   labs(
-    title = "soil moisture content",
+    title = "Soil moisture content",
     x = "date",
-    y = "Soil moisture (%)",
+    y = "SWC (%)",
   ) +
   scale_color_manual(
-    values = c("5 cm" = "blue", "15 cm" = "yellow", "25 cm" = "red", "55 cm" = "green", "85 cm" = "orange", "105 cm" = "purple", "115 cm" = "cadetblue"),
-    name = "Depth" )
+    values = c("5 cm" = "blue", "15 cm" = "yellow", "25 cm" = "red", "35 cm" = "darkgreen", "45 cm" = "orange", "65 cm" = "purple", "85 cm" = "cadetblue", "105 cm" = "pink", "115 cm" = "lightgreen"),
+    labels = c("5 cm", "15 cm", "25 cm", "35 cm", "45 cm", "65 cm", "85 cm", "105 cm", "115 cm"),
+    name = "Depth" 
+  ) +
+  theme(
+    plot.title = element_text(size = 16)
+  )
 
 
 #checking the soil moisture patterns against WFPS
@@ -114,8 +127,8 @@ ggplot(Normalized_Soil_moisture) +
 
 #Checking how probe 1 and 3 compare
 ggplot(All_Soil_moisture) +
-  geom_point(aes(x = datetime, y = SWC_1_005_WFPS, color = "Probe 1"), size = 0.1) +
-  geom_point(aes(x = datetime, y = SWC_3_005_WFPS, color = "Probe 3"), size = 0.1) +
+  geom_point(aes(x = datetime, y = SWC_1_025_WFPS, color = "Probe 1"), size = 0.1) +
+  geom_point(aes(x = datetime, y = SWC_3_025_WFPS, color = "Probe 3"), size = 0.1) +
   labs(
     title = "Probe 1 vs 3",
     x = "datetime",
@@ -123,9 +136,11 @@ ggplot(All_Soil_moisture) +
   ) +
   scale_color_manual(values = c("Probe 1" = "red", "Probe 3" = "blue"))
 
+
+
 #Scatterplot generally linear but hysteresis
 ggplot(All_Soil_moisture) +
-  geom_point(aes(x = SWC_1_085_WFPS, y = SWC_3_085_WFPS), size = 0.1)+
+  geom_point(aes(x = SWC_1_015_WFPS, y = SWC_3_015_WFPS), size = 0.1)+
   labs(
     title = "Cor probe 1 & probe 3",
     x = "Probe 1",
