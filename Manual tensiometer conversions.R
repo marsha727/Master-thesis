@@ -76,8 +76,8 @@ WFPS_tensiometer <- Tensiometer_SWC %>%
 
 
 #Make sure datetime is correct format
-Tensiometer_SWC$TIMESTAMP <- as.POSIXct(Tensiometer_SWC$TIMESTAMP, format = "%Y-%m-%d %H:%M:%S")
-WFPS_tensiometer$TIMESTAMP <- as.POSIXct(WFPS_tensiometer$TIMESTAMP, format = "%Y-%m-%d %H:%M:%S")
+Tensiometer_SWC$TIMESTAMP <- format(Tensiometer_SWC$TIMESTAMP, format = "%Y:%m:%d %H:%M:%S")
+WFPS_tensiometer$TIMESTAMP <- format(Tensiometer_SWC$TIMESTAMP, format = "%Y:%m:%d %H:%M:%S")
 
 #write to a new csv file
 #Extracting dataset to CSV
