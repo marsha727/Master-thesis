@@ -8,7 +8,8 @@ Subset_Bodem_fysische_metingen <- read.csv2("Datasets/MvG_Bodem_fysische_metinge
 #This sets the paths where the data should be retrieved. The first one is just a folder for raster files
 #from OWASIS and the second one is a shapefile of footprint of EC towers
 pathOWASISRast <-  "D:/R_master_thesis/Github/Master-thesis/Datasets/OWASIS/TIFF/groenehart/"
-pathTowers <- "D:/R_master_thesis/Github/Master-thesis/Datasets/OWASIS/Shapefiles/LAW_MS_ICOS_Tiwer_Path.shp"
+pathTowers <- "D:/R_master_thesis/OWASIS/Shapefiles/LAW_parc.gpkg"
+pathPolders <- "D:/R_master_thesis/Github/Master-thesis/Datasets/OWASIS/Shapefiles/LAW_MS_ICOS_Tiwer_Path.shp"
 
 #It creates list of file paths to .tif files in a new list
 #recursive is used to it also takes any files from subdirectories from the pathway
@@ -30,6 +31,7 @@ OWASISAb[["Bodemvocht"]] <- list(Abbreviation="BV",Units= "mm")
 
 #I think this vect reads the shapefile and stores it for pTowers
 pTowers <- vect(pathTowers)
+pPolders <- vect(pathPolders)
 #empty list
 lTowi <- list()
 #create a sequence of dates
@@ -40,6 +42,20 @@ df.owasis <- data.frame(day=lDay)
 #I think this means that pTowers has a column called names, the names
 #is temporatly taken by NTi, and for each NTi a new column is creates
 #is used to create a new column in the new dataframe df.owasis, with all its cells having NA
+
+
+#Another loop i think the point is that it needs to remove some parts of the of the file directory to 
+#find the directly later
+polTowers1 <- buffer(pTowers,width=250)
+polTowers1 <- crop(polTowers,pPolders)
+
+
+ri0 <- rast(paste0(pathOWASISRast,lOWASIS[1]))
+ri01 <- crop(ri0,polTowers1)
+ri01 <- mask(ri01,polTowers1)
+ptsri01 <- as.points(ri01)
+dfri01 <- data.frame(values(ptsri01),geom(ptsri01))
+namesPix <- paste0("x_",dfri01[["x"]],"_y",dfri01[["y"]])
 for(NTi in pTowers[["Name"]]){
   df.owasis[,NTi] <- NA
 }
@@ -47,12 +63,22 @@ for(NTi in pTowers[["Name"]]){
 #It makes a new list
 # in this list we have three elements that all point to the same dataframe
 l.df.owasis <- list()
-l.df.owasis[["BBB"]] <- df.owasis
-l.df.owasis[["GW"]] <- df.owasis
-l.df.owasis[["BV"]] <- df.owasis
+nVar <- c("BBB","GW","BV")
+# l.df.owasis[["BBB"]] <- df.owasis
+# l.df.owasis[["GW"]] <- df.owasis
+# l.df.owasis[["BV"]] <- df.owasis
+for(nVari in nVar){
+  l.df.owasisi <- list()
+  for(nPi in namesPix){
 
-#Another loop i think the point is that it needs to remove some parts of the of the file directory to 
-#find the directly later
+    l.df.owasisi[[nPi]] <- df.owasis
+  }  
+  l.df.owasis[[nVari]] <- l.df.owasisi
+}
+
+
+
+
 for(owi in lOWASIS){
   
   #the str_split splil text whenever a underscore is present. [[1]] then selects the first element from this split
@@ -68,21 +94,35 @@ for(owi in lOWASIS){
   print(dayi)
   
   #Check if any day is equal to date list created earlier
+  
+
+  
   if(any(lDay==dayi)){
     #this reads the raster file, in this case it seems that owi is part of a filename that i want to read
     #whereas the pathOWASISRast is the directory
     ri <- rast(paste0(pathOWASISRast,owi))
+    
     #ri contains values for locations, and pTowers are also spatial points
     #the function tries to match those locations and extracts those values for those locations
     #fun= function(x)meadian(x, na.rm=T) calculates the median of the values from each location
-    dfi <-extract(ri,pTowers,fun=function(x)median(x,na.rm=T)) 
+    
+    #ri <- rast(paste0(pathOWASISRast,owi))
+    ri1 <- crop(ri,polTowers1)
+    ri1 <- mask(ri1,polTowers1)
+    ptsri <- as.points(ri1)
+    dfri <- data.frame(values(ptsri),geom(ptsri))
+    #dfi <-extract(ri,pTowers,fun=function(x)median(x,na.rm=T)) 
     
     #I think this part attaches the values of dfi for each day to the the list that contains BBB etc.
-    for(i in seq.int(nrow(dfi))){
-      if(is.finite(dfi[i,ncol(dfi)])){
-        l.df.owasis[[nvi1]][which(lDay==dayi),pTowers[["Name"]][i,"Name"]] <- dfi[i,ncol(dfi)]            
-      }
+    if(nrow(dfri)>0){
+      for(i in seq.int(nrow(dfri))){
+        if(is.finite(dfri[i,1])){
+          nPixi <- paste0("x_",dfri[i,"x"],"_y",dfri01[i,"y"])
+          l.df.owasis[[nvi1]][[nPixi]][which(lDay==dayi),pTowers[["Name"]][1,"Name"]] <- dfri[i,1]            
+        }
+      }      
     }
+
     
   }
 } 
