@@ -39,45 +39,34 @@ lDay <- seq.Date(as.Date("2022-04-02","%Y-%m-%d"),as.Date("2022-11-01","%Y-%m-%d
 #A new data frame with day as variable
 df.owasis <- data.frame(day=lDay)
 
-#I think this means that pTowers has a column called names, the names
-#is temporatly taken by NTi, and for each NTi a new column is creates
-#is used to create a new column in the new dataframe df.owasis, with all its cells having NA
-
-
-#Another loop i think the point is that it needs to remove some parts of the of the file directory to 
-#find the directly later
+#This taken the towers polygon (of polder) and than creates a buffer around this with 250 m
+#cropped to pPolders so it will exclude the canal etc. that is outside the SSI
 polTowers1 <- buffer(pTowers,width=250)
-polTowers1 <- crop(polTowers,pPolders)
+polTowers1 <- crop(polTowers1,pPolders)
 
-
-ri0 <- rast(paste0(pathOWASISRast,lOWASIS[1]))
-ri01 <- crop(ri0,polTowers1)
-ri01 <- mask(ri01,polTowers1)
-ptsri01 <- as.points(ri01)
-dfri01 <- data.frame(values(ptsri01),geom(ptsri01))
-namesPix <- paste0("x_",dfri01[["x"]],"_y",dfri01[["y"]])
-for(NTi in pTowers[["Name"]]){
+#i think this might be outside the loop as well to make sure the namesPix is generated for later
+ri0 <- rast(paste0(pathOWASISRast,lOWASIS[1])) #contains all the rasters for BBB
+ri01 <- crop(ri0,polTowers1) #Cuts the raster to the buffer
+ri01 <- mask(ri01,polTowers1) 
+ptsri01 <- as.points(ri01) #makes points of the pixels?
+dfri01 <- data.frame(values(ptsri01),geom(ptsri01)) #contains the coordinates of the points
+namesPix <- paste0("x_",dfri01[["x"]],"_y",dfri01[["y"]]) #creates the names for each pixel
+for(NTi in pTowers[["Name"]]){ #creates new columns based on names in pTowers but which idk
   df.owasis[,NTi] <- NA
 }
 
 #It makes a new list
-# in this list we have three elements that all point to the same dataframe
 l.df.owasis <- list()
 nVar <- c("BBB","GW","BV")
-# l.df.owasis[["BBB"]] <- df.owasis
-# l.df.owasis[["GW"]] <- df.owasis
-# l.df.owasis[["BV"]] <- df.owasis
-for(nVari in nVar){
+
+for(nVari in nVar){ #create a list with BBB etc.
   l.df.owasisi <- list()
-  for(nPi in namesPix){
+  for(nPi in namesPix){     #for each pixel it creates a list within the BBB, GW and BV
 
     l.df.owasisi[[nPi]] <- df.owasis
   }  
   l.df.owasis[[nVari]] <- l.df.owasisi
 }
-
-
-
 
 for(owi in lOWASIS){
   
@@ -93,20 +82,13 @@ for(owi in lOWASIS){
   dayi <- as.Date(str_split(tail(str_split(owi,"_")[[1]],2)[[1]],"T")[[1]][[1]],"%Y-%m-%d")
   print(dayi)
   
-  #Check if any day is equal to date list created earlier
-  
-
-  
+#Check if any day is equal to date list created earlier
   if(any(lDay==dayi)){
     #this reads the raster file, in this case it seems that owi is part of a filename that i want to read
     #whereas the pathOWASISRast is the directory
     ri <- rast(paste0(pathOWASISRast,owi))
     
-    #ri contains values for locations, and pTowers are also spatial points
-    #the function tries to match those locations and extracts those values for those locations
-    #fun= function(x)meadian(x, na.rm=T) calculates the median of the values from each location
-    
-    #ri <- rast(paste0(pathOWASISRast,owi))
+    #similar as befor but in loop
     ri1 <- crop(ri,polTowers1)
     ri1 <- mask(ri1,polTowers1)
     ptsri <- as.points(ri1)
@@ -122,10 +104,10 @@ for(owi in lOWASIS){
         }
       }      
     }
-
     
   }
 } 
+
 
 
 #I would like to get my data in the list to a dataframe for camparison later
@@ -140,9 +122,5 @@ write.csv2(OWASIS_BBB, file = "Transformed/Langeweide_OWASIS_BBB.csv", row.names
 OWASIS_BBB_WFPS <- OWASIS_BBB %>% 
   mutate(BBB = Subset_Bodem_fysische_metingen$WCS[1] - BBB ) %>% 
   rename(WFPS = BBB)
-
-
-
-
 
 read.csv2(OWASIS_BBB, file = "Langeweide_OWASIS")
