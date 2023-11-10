@@ -108,6 +108,38 @@ for(owi in lOWASIS){
   }
 } 
 
+#some first attempt at getting average value per day for all pixels
+mean_values <- list()
+
+for (date in lDay) {
+  # Extract values for each pixel for the given date
+  valueForDate <- lapply(l.df.owasis$BBB, function(dataFrame) {
+    subset_data <- dataFrame[dataFrame$day %in% as.Date(date), "LAW_MS_ICOS"]
+    if (length(subset_data) > 0) {
+      return(subset_data)
+    } else {
+      return(NA)
+    }
+  })
+  
+  # Exclude NA values
+  valueForDate <- unlist(valueForDate)
+  valueForDate <- valueForDate[!is.na(valueForDate)]
+  
+  # Print values for debugging
+  print(valueForDate)
+  
+  # Calculate the mean for the current date
+  mean_values[[as.character(date)]] <- mean(valueForDate, na.rm = TRUE)
+}
+
+# Create a data frame with the calculated mean values
+meanValues_OWASIS <- data.frame(Date = as.Date(lDay), MeanBBB = sapply(mean_values, mean))
+
+
+#extract buffer and pixel coordinates for analysis in GIS
+writeVector(polTowers1, "Transformed/buffer.shp", overwrite = TRUE )
+writeRaster(ri01, "Transformed/rbuffer.tif", overwrite = TRUE)
 
 
 #I would like to get my data in the list to a dataframe for camparison later
