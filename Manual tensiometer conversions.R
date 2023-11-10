@@ -81,8 +81,8 @@ WFPS_tensiometer$TIMESTAMP <- as.POSIXct(WFPS_tensiometer$TIMESTAMP, format = "%
 
 #write to a new csv file
 #Extracting dataset to CSV
-write.csv2(WFPS_tensiometer, file = "Langeweide_Tensio_WFPS.csv", row.names = TRUE)
-write.csv2(Tensiometer_SWC, file = "Langeweide_Tensio.csv", row.names = TRUE)
+write.csv2(WFPS_tensiometer, file = "Transformed/Langeweide_Tensio_WFPS.csv", row.names = TRUE)
+write.csv2(Tensiometer_SWC, file = "Transformed/Langeweide_Tensio.csv", row.names = TRUE)
 write.csv2(Subset_Bodem_fysische_metingen, file = "Datasets/MvG_Bodem_fysische_metingen.csv", row.names = TRUE)
 
 
