@@ -1,5 +1,6 @@
 library(terra)
 library(stringr)
+library(dplyr)
 #do not load the tidyverse packages because that has conflicting functions with terra package
 
 Subset_Bodem_fysische_metingen <- read.csv2("Datasets/MvG_Bodem_fysische_metingen.csv")
@@ -13,6 +14,10 @@ pathTowers <- "D:/R_master_thesis/Github/Master-thesis/Datasets/OWASIS/Shapefile
 #recursive is used to it also takes any files from subdirectories from the pathway
 #pattern determines that only files with .tif are taken
 lOWASIS <- list.files(pathOWASISRast,recursive = T,pattern=".tif")
+
+#Added this to prevent the auxilary files of interupting the iteration
+#grepl checks for the pattern and gives TRUE if found, then it only keeps elements not having this pattern
+lOWASIS <- lOWASIS[!grepl(".tif.aux.xml", lOWASIS)]
 
 #An empty list
 OWASISAb <- list()
@@ -28,7 +33,7 @@ pTowers <- vect(pathTowers)
 #empty list
 lTowi <- list()
 #create a sequence of dates
-lDay <- seq.Date(as.Date("2022-04-02","%Y-%m-%d"),as.Date("2022-07-26","%Y-%m-%d"),by = "1 day")
+lDay <- seq.Date(as.Date("2022-04-02","%Y-%m-%d"),as.Date("2022-11-01","%Y-%m-%d"),by = "1 day")
 #A new data frame with day as variable
 df.owasis <- data.frame(day=lDay)
 
@@ -86,6 +91,10 @@ for(owi in lOWASIS){
 #I would like to get my data in the list to a dataframe for camparison later
 OWASIS_BBB <- data.frame(l.df.owasis[["BBB"]])
 OWASIS_BBB <- rename(OWASIS_BBB, BBB = LAW_MS)
+
+missing_value_dates <- OWASIS_BBB$day[is.na(OWASIS_BBB$BBB)]
+
+write.csv2(OWASIS_BBB, file = "Transformed/Langeweide_OWASIS_BBB.csv", row.names = TRUE)
 
 #Conversions to WFPS (%)
 OWASIS_BBB_WFPS <- OWASIS_BBB %>% 
