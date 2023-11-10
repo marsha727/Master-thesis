@@ -65,11 +65,11 @@ WFPS_tensiometer <- Tensiometer_SWC %>%
   mutate(MS_TMAP_1_D_020 = MS_TMAP_1_D_020 / WCS1) %>% 
   mutate(MS_TMAP_2_D_030 = MS_TMAP_2_D_030 / WCS1) %>% 
   mutate(MS_TMAP_3_D_050 = MS_TMAP_3_D_050 / WCS2) %>% 
-
+  
   mutate(MS_TMAP_4_D_020 = MS_TMAP_4_D_020 / WCS1) %>% 
   mutate(MS_TMAP_5_D_040 = MS_TMAP_5_D_040 / WCS2) %>% 
   mutate(MS_TMAP_6_D_060 = MS_TMAP_6_D_060 / WCS3) %>% 
-
+  
   mutate(MS_TMAP_7_D_020 = MS_TMAP_7_D_020 / WCS1) %>% 
   mutate(MS_TMAP_8_D_040 = MS_TMAP_8_D_040 / WCS2) %>% 
   mutate(MS_TMAP_9_D_060 = MS_TMAP_9_D_060 / WCS3)
@@ -78,6 +78,13 @@ WFPS_tensiometer <- Tensiometer_SWC %>%
 #Make sure datetime is correct format
 Tensiometer_SWC$TIMESTAMP <- as.POSIXct(Tensiometer_SWC$TIMESTAMP, format = "%Y-%m-%d %H:%M:%S")
 WFPS_tensiometer$TIMESTAMP <- as.POSIXct(WFPS_tensiometer$TIMESTAMP, format = "%Y-%m-%d %H:%M:%S")
+
+#write to a new csv file
+#Extracting dataset to CSV
+write.csv2(WFPS_tensiometer, file = "Langeweide_Tensio_WFPS.csv", row.names = TRUE)
+write.csv2(Tensiometer_SWC, file = "Langeweide_Tensio.csv", row.names = TRUE)
+write.csv2(Subset_Bodem_fysische_metingen, file = "Datasets/MvG_Bodem_fysische_metingen.csv", row.names = TRUE)
+
 
 ggplot(Tensiometer_SWC, aes(x = TIMESTAMP)) +
   geom_point(aes(y = MS_TMAP_1_D_020, color = "20 cm"), size = 0.3) +
@@ -141,7 +148,7 @@ ggplot(Tensiometer_SWC, aes(x = TIMESTAMP)) +
   scale_x_datetime(
     labels = scales::date_format("%B")
   )
-               
+
 ggplot(Tensiometer_SWC, aes(x = TIMESTAMP)) +
   geom_line(aes(y = MS_TMAP_1_D_020, color = "Probe 1"), size = 0.3) +
   geom_line(aes(y = MS_TMAP_4_D_020, color = "Probe 4"), size = 0.3) +
