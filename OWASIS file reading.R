@@ -108,10 +108,11 @@ for(owi in lOWASIS){
   }
 } 
 
-#some first attempt at getting average value per day for all pixels
+#Create empty list for mean and stdev values
 mean_values <- list()
 stdev_values <- list()
 
+#loop to extract values for each pixel for date
 for (date in lDay) {
   # Extract values for each pixel for the given date each pixel being its own df
   valueForDate <- lapply(l.df.owasis$BBB, function(Pixel) {
@@ -128,11 +129,14 @@ for (date in lDay) {
   valueForDate <- valueForDate[!is.na(valueForDate)]
   
   # Calculate the mean for the current date ignoring NA in calc
+  #gives values that are NA, a NaN, otherwise calculate mean or sd
   mean_values[[as.character(date)]] <- ifelse(length(valueForDate) > 0, mean(valueForDate, na.rm = TRUE), NaN)
-  stdev_values[[as.character(date)]] <- ifelse(length(valueForDate) > 1, sd(valueForDate, na.rm = TRUE), NaN)
+  stdev_values[[as.character(date)]] <- ifelse(length(valueForDate) > 0, sd(valueForDate, na.rm = TRUE), NaN)
+
 }
 
 # Create a data frame with the calculated mean and standard deviation values
+#here again a fail safe for the NA/NaN values otherwise errors
 meanValues_OWASIS <- data.frame(
   Date = as.Date(lDay),
   MeanBBB = sapply(mean_values, function(x) if (all(is.na(x))) NaN else mean(x)),
@@ -141,6 +145,39 @@ meanValues_OWASIS <- data.frame(
 
 # Print the resulting data frame
 print(meanValues_OWASIS)
+
+ggplot(meanValues_OWASIS, aes(x = Date, y = MeanBBB)) +
+  geom_line(color = "blue") +
+  geom_ribbon(aes(ymin = MeanBBB - StdevBBB, ymax = MeanBBB + StdevBBB), fill = "lightblue", alpha = 0.5) +
+  labs(title = "Mean pixel values with standard deviation",
+       x = "Date",
+       y = "Mean BBB") +
+  theme_minimal()
+
+dates_with_large_stdev <- meanValues_OWASIS$Date[meanValues_OWASIS$StdevBBB > 5]
+mean_stdev <- mean(meanValues_OWASIS$StdevBBB, na.rm = TRUE)
+
+
+
+
+# Calculate mean and standard deviation for each pixel across all dates
+P_mean_values <- lapply(l.df.owasis$BBB, function(Pixel) {
+  mean_value <- mean(Pixel$LAW_MS_ICOS, na.rm = TRUE)
+  return(ifelse(is.nan(mean_value), NA, mean_value))
+})
+
+P_stdev_values <- lapply(l.df.owasis$BBB, function(Pixel) {
+  stdev_value <- sd(Pixel$LAW_MS_ICOS, na.rm = TRUE)
+  return(ifelse(is.nan(stdev_value), NA, stdev_value))
+})
+
+# Identify the name of the pixel with the maximum mean value
+max_mean_pixel_name <- names(P_mean_values)[which.max(P_mean_values)]
+
+# Identify the name of the pixel with the maximum standard deviation value
+max_stdev_pixel_name <- names(P_stdev_values)[which.max(P_stdev_values)]
+
+
 
 
 
