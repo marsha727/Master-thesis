@@ -123,32 +123,44 @@ for (date in lDay) {
     }
   })
   
-  #check for NA
+  # Check for NA
   valueForDate <- unlist(valueForDate)
   valueForDate <- valueForDate[!is.na(valueForDate)]
   
   # Calculate the mean for the current date ignoring NA in calc
-  mean_values[[as.character(date)]] <- mean(valueForDate, na.rm = TRUE)
-  stdev_values[[as.character(date)]] <- sd(valueForDate, na.rm = TRUE)
-  
-  print(stdev_values)[[as.character(date)]]
-  
-  }
+  mean_values[[as.character(date)]] <- ifelse(length(valueForDate) > 0, mean(valueForDate, na.rm = TRUE), NaN)
+  stdev_values[[as.character(date)]] <- ifelse(length(valueForDate) > 1, sd(valueForDate, na.rm = TRUE), NaN)
+}
 
-# Create a data frame with the calculated mean values
+# Create a data frame with the calculated mean and standard deviation values
 meanValues_OWASIS <- data.frame(
   Date = as.Date(lDay),
-  MeanBBB = sapply(mean_values, mean),
-  StdevBBB = sapply(stdev_values, function(x) if (all(is.na(x))) NaN else sd(x, na.rm = TRUE))
+  MeanBBB = sapply(mean_values, function(x) if (all(is.na(x))) NaN else mean(x)),
+  StdevBBB = sapply(stdev_values, function(x) if (all(is.na(x))) NaN else x)
 )
 
 # Print the resulting data frame
 print(meanValues_OWASIS)
 
 
+
 #extract buffer and pixel coordinates for analysis in GIS
 writeVector(polTowers1, "Transformed/buffer.shp", overwrite = TRUE )
 writeRaster(ri01, "Transformed/rbuffer.tif", overwrite = TRUE)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 #I would like to get my data in the list to a dataframe for camparison later
