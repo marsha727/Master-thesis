@@ -166,7 +166,7 @@ P_mean_values <- lapply(l.df.owasis$BBB, function(Pixel) {
   return(ifelse(is.nan(mean_value), NA, mean_value))
 })
 
-P_stdev_values <- lapply(l.df.owasis$BBB, function(Pixel) {
+P_df_stdev_values <- lapply(l.df.owasis$BBB, function(Pixel) {
   stdev_value <- sd(Pixel$LAW_MS_ICOS, na.rm = TRUE)
   return(ifelse(is.nan(stdev_value), NA, stdev_value))
 })
@@ -176,6 +176,35 @@ max_mean_pixel_name <- names(P_mean_values)[which.max(P_mean_values)]
 
 # Identify the name of the pixel with the maximum standard deviation value
 max_stdev_pixel_name <- names(P_stdev_values)[which.max(P_stdev_values)]
+
+
+max_variation_pixel_names <- list()
+P_stdev_value <- list()
+
+# Loop through each date
+for (date in lDay) {
+  # Calculate standard deviation for each pixel for the given date
+  P_stdev_value <- sapply(l.df.owasis$BBB, function(Pixel) {
+    subset_data <- Pixel[Pixel$day == as.Date(date), "LAW_MS_ICOS"]
+    
+    # Check for NA and length > 0
+    if (length(na.omit(subset_data)) > 0) {
+      stdev_value <- sd(subset_data, na.rm = TRUE)
+      return(ifelse(is.nan(P_stdev_value), NA, P_stdev_value))
+    } else {
+      return(NA)
+    }
+  })
+  
+  # Identify the name of the pixel with the maximum standard deviation value for the current date
+  max_stdev_pixel_name <- names(P_stdev_values)[which.max(P_stdev_values)]
+  
+  # Store the result in the list
+  max_variation_pixel_names[[as.character(date)]] <- if (all(is.na(P_stdev_values))) NA else max_stdev_pixel_name
+}
+
+# Print the result
+print(max_variation_pixel_names)
 
 
 
