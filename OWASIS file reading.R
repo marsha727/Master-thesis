@@ -110,11 +110,12 @@ for(owi in lOWASIS){
 
 #some first attempt at getting average value per day for all pixels
 mean_values <- list()
+stdev_values <- list()
 
 for (date in lDay) {
-  # Extract values for each pixel for the given date
-  valueForDate <- lapply(l.df.owasis$BBB, function(dataFrame) {
-    subset_data <- dataFrame[dataFrame$day %in% as.Date(date), "LAW_MS_ICOS"]
+  # Extract values for each pixel for the given date each pixel being its own df
+  valueForDate <- lapply(l.df.owasis$BBB, function(Pixel) {
+    subset_data <- Pixel[Pixel$day %in% as.Date(date), "LAW_MS_ICOS"]
     if (length(subset_data) > 0) {
       return(subset_data)
     } else {
@@ -122,19 +123,27 @@ for (date in lDay) {
     }
   })
   
-  # Exclude NA values
+  #check for NA
   valueForDate <- unlist(valueForDate)
   valueForDate <- valueForDate[!is.na(valueForDate)]
   
-  # Print values for debugging
-  print(valueForDate)
-  
-  # Calculate the mean for the current date
+  # Calculate the mean for the current date ignoring NA in calc
   mean_values[[as.character(date)]] <- mean(valueForDate, na.rm = TRUE)
-}
+  stdev_values[[as.character(date)]] <- sd(valueForDate, na.rm = TRUE)
+  
+  print(stdev_values)[[as.character(date)]]
+  
+  }
 
 # Create a data frame with the calculated mean values
-meanValues_OWASIS <- data.frame(Date = as.Date(lDay), MeanBBB = sapply(mean_values, mean))
+meanValues_OWASIS <- data.frame(
+  Date = as.Date(lDay),
+  MeanBBB = sapply(mean_values, mean),
+  StdevBBB = sapply(stdev_values, function(x) if (all(is.na(x))) NaN else sd(x, na.rm = TRUE))
+)
+
+# Print the resulting data frame
+print(meanValues_OWASIS)
 
 
 #extract buffer and pixel coordinates for analysis in GIS
