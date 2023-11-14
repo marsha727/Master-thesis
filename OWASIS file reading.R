@@ -140,7 +140,7 @@ for (date in lDay) {
 
 # Create a data frame with the calculated mean and standard deviation values
 #here again a fail safe for the NA/NaN values otherwise errors
-meanValues_OWASIS <- data.frame(
+OWASIS_BBB <- data.frame(
   Date = as.Date(lDay),
   
   MeanBBB = sapply(mean_values, function(x) if (all(is.na(x))) NaN else mean(x)),
@@ -150,9 +150,10 @@ meanValues_OWASIS <- data.frame(
 )
 
 # Print the resulting data frame
-print(meanValues_OWASIS)
+print(OWASIS_BBB)
 
-ggplot(meanValues_OWASIS, aes(x = Date)) +
+#just to visually check the variation
+ggplot(OWASIS_BBB, aes(x = Date)) +
   geom_line(aes(y = MeanBBB), color = "blue") +
   geom_line(aes(y = MedianBBB), color = "red") +
   geom_ribbon(aes(ymin = MeanBBB - StdevBBB, ymax = MeanBBB + StdevBBB), fill = "lightblue", alpha = 0.5) +
@@ -162,19 +163,20 @@ ggplot(meanValues_OWASIS, aes(x = Date)) +
        y = "BBB (mm)") +
   theme_minimal()
 
-dates_with_large_MAD <- meanValues_OWASIS$Date[meanValues_OWASIS$MadBBB >= 2]
+#Some threshold investigation compared to meean MAD
+dates_with_large_MAD <- OWASIS_BBB$Date[OWASIS_BBB$MadBBB >= 2]
 print(dates_with_large_MAD)
-average_MAD <- mean(meanValues_OWASIS$MadBBB, na.rm = TRUE)
+average_MAD <- mean(OWASIS_BBB$MadBBB, na.rm = TRUE)
 
 # Calculate mean and standard deviation for each pixel across all dates
 P_mean_values <- lapply(l.df.owasis$BBB, function(Pixel) {
-  mean_value <- mean(Pixel$LAW_MS_ICOS, na.rm = TRUE)
-  return(ifelse(is.nan(mean_value), NA, mean_value))
+  P_mean_value <- mean(Pixel$LAW_MS_ICOS, na.rm = TRUE)
+  return(ifelse(is.nan(P_mean_value), NA, P_mean_value))
 })
 
-P_df_stdev_values <- lapply(l.df.owasis$BBB, function(Pixel) {
-  stdev_value <- sd(Pixel$LAW_MS_ICOS, na.rm = TRUE)
-  return(ifelse(is.nan(stdev_value), NA, stdev_value))
+P_stdev_values <- lapply(l.df.owasis$BBB, function(Pixel) {
+  P_stdev_value <- sd(Pixel$LAW_MS_ICOS, na.rm = TRUE)
+  return(ifelse(is.nan(P_stdev_value), NA, P_stdev_value))
 })
 
 # Identify the name of the pixel with the maximum mean value
@@ -187,32 +189,9 @@ max_stdev_pixel_name <- names(P_stdev_values)[which.max(P_stdev_values)]
 writeVector(polTowers1, "Transformed/buffer.shp", overwrite = TRUE )
 writeRaster(ri01, "Transformed/rbuffer.tif", overwrite = TRUE)
 
+#formating the dates for converersions
+OWASIS_BBB$Date <- format(OWASIS_BBB$Date, format = "%Y-%m-%d")
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#I would like to get my data in the list to a dataframe for camparison later
-OWASIS_BBB <- data.frame(l.df.owasis[["BBB"]])
-OWASIS_BBB <- rename(OWASIS_BBB, BBB = LAW_MS)
-
-missing_value_dates <- OWASIS_BBB$day[is.na(OWASIS_BBB$BBB)]
-
-write.csv2(OWASIS_BBB, file = "Transformed/Langeweide_OWASIS_BBB.csv", row.names = TRUE)
-
-#Conversions to WFPS (%)
-OWASIS_BBB_WFPS <- OWASIS_BBB %>% 
-  mutate(BBB = Subset_Bodem_fysische_metingen$WCS[1] - BBB ) %>% 
-  rename(WFPS = BBB)
-
-read.csv2(OWASIS_BBB, file = "Langeweide_OWASIS")
+#write csv for the BBB files
+write.csv2(OWASIS_BBB, file = "Transformed/Langeweide_OWASIS_BBB.csv", row.names = FALSE)
+test_read <- read.csv2("Transformed/Langeweide_OWASIS_BBB.csv")
