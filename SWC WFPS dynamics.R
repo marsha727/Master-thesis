@@ -36,11 +36,9 @@ TENSIO_WFPS <- TENSIO_WFPS %>%
   group_by(TIMESTAMP = format(TIMESTAMP, "%Y-%m-%d")) %>% 
   summarize(across(everything(), mean, na.rm = TRUE))
 
-
-
 #Bind all SWC measurements note: BBB is AFPS
 SWC_all <- bind_cols(SENTEK_all[1], SENTEK_all[,4:27], TENSIO_SWC[,2:11], OWASIS_BBB[,2:5])
-WFPS_all <- bind_cols(SENTEK_all[1], SENTEK_all[,56:75], TENSIO_WFPS[,2:11], OWASIS_BBB[,2:5])
+WFPS_all <- bind_cols(SENTEK_all[1], SENTEK_all[,52:75], TENSIO_WFPS[,2:11], OWASIS_BBB[,2:5])
 
 SWC_all$datetime <- as.POSIXct(SWC_all$datetime, format = "%Y-%m-%d")
 WFPS_all$datetime <- as.POSIXct(WFPS_all$datetime, format = "%Y-%m-%d")
@@ -50,5 +48,20 @@ ggplot(SWC_all, aes(x = datetime)) +
   geom_line(aes(y = MS_TMAP_1_D_020*100), size = 0.5)
 
 ggplot(WFPS_all, aes(x = datetime)) +
-  geom_line(aes(y = SWC_1_045_WFPS), size = 0.5) +
-  geom_line(aes(y = MS_TMAP_5_D_040), size = 0.5)
+  geom_line(aes(y = SWC_3_025_WFPS, color = "SENTEK"), size = 0.5, alpha = 3) +
+  geom_line(aes(y = MS_TMAP_7_D_020, color = "TENSIO"), size = 0.5, alpha = 3) +
+  labs(
+    title = "WFPS: SENTEK VS TENSIO",
+    x = "datetime",
+    y = "WFPS (%)"
+  ) +
+  scale_color_manual(
+    values = c("SENTEK" = "red", "TENSIO" = "blue"),
+    labels = c("SENTEK", "TENSIO"),
+    name = "Measurement device"
+    ) +
+  theme(
+    legend.title = element_text(size = 8),
+    legend.text = element_text(size = 7),
+    legend.key.width = unit(0.5, "cm")
+  )
