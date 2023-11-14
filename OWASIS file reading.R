@@ -111,6 +111,8 @@ for(owi in lOWASIS){
 #Create empty list for mean and stdev values
 mean_values <- list()
 stdev_values <- list()
+median_values <- list()
+mad_values <- list()
 
 #loop to extract values for each pixel for date
 for (date in lDay) {
@@ -132,33 +134,37 @@ for (date in lDay) {
   #gives values that are NA, a NaN, otherwise calculate mean or sd
   mean_values[[as.character(date)]] <- ifelse(length(valueForDate) > 0, mean(valueForDate, na.rm = TRUE), NaN)
   stdev_values[[as.character(date)]] <- ifelse(length(valueForDate) > 0, sd(valueForDate, na.rm = TRUE), NaN)
-
+  median_values[[as.character(date)]] <- ifelse(length(valueForDate) > 0, median(valueForDate, na.rm = TRUE), NaN)
+  mad_values[[as.character(date)]] <- ifelse(length(valueForDate) > 0, mad(valueForDate, na.rm = TRUE), NaN)
 }
 
 # Create a data frame with the calculated mean and standard deviation values
 #here again a fail safe for the NA/NaN values otherwise errors
 meanValues_OWASIS <- data.frame(
   Date = as.Date(lDay),
+  
   MeanBBB = sapply(mean_values, function(x) if (all(is.na(x))) NaN else mean(x)),
-  StdevBBB = sapply(stdev_values, function(x) if (all(is.na(x))) NaN else x)
+  StdevBBB = sapply(stdev_values, function(x) if (all(is.na(x))) NaN else x),
+  MedianBBB = sapply(median_values, function(x) if (all(is.na(x))) NaN else x),
+  MadBBB = sapply(mad_values, function(x) if(all(is.na(x))) NaN else x)
 )
 
 # Print the resulting data frame
 print(meanValues_OWASIS)
 
-ggplot(meanValues_OWASIS, aes(x = Date, y = MeanBBB)) +
-  geom_line(color = "blue") +
+ggplot(meanValues_OWASIS, aes(x = Date)) +
+  geom_line(aes(y = MeanBBB), color = "blue") +
+  geom_line(aes(y = MedianBBB), color = "red") +
   geom_ribbon(aes(ymin = MeanBBB - StdevBBB, ymax = MeanBBB + StdevBBB), fill = "lightblue", alpha = 0.5) +
-  labs(title = "Mean pixel values with standard deviation",
+  geom_ribbon(aes(ymin = MedianBBB - MadBBB, ymax = MedianBBB + MadBBB), fill = "pink", alpha = 0.5) +
+  labs(title = "Mean/median pixel values with STDEV/MAD",
        x = "Date",
-       y = "Mean BBB") +
+       y = "BBB (mm)") +
   theme_minimal()
 
-dates_with_large_stdev <- meanValues_OWASIS$Date[meanValues_OWASIS$StdevBBB > 5]
-mean_stdev <- mean(meanValues_OWASIS$StdevBBB, na.rm = TRUE)
-
-
-
+dates_with_large_MAD <- meanValues_OWASIS$Date[meanValues_OWASIS$MadBBB >= 2]
+print(dates_with_large_MAD)
+average_MAD <- mean(meanValues_OWASIS$MadBBB, na.rm = TRUE)
 
 # Calculate mean and standard deviation for each pixel across all dates
 P_mean_values <- lapply(l.df.owasis$BBB, function(Pixel) {
@@ -176,39 +182,6 @@ max_mean_pixel_name <- names(P_mean_values)[which.max(P_mean_values)]
 
 # Identify the name of the pixel with the maximum standard deviation value
 max_stdev_pixel_name <- names(P_stdev_values)[which.max(P_stdev_values)]
-
-
-max_variation_pixel_names <- list()
-P_stdev_value <- list()
-
-# Loop through each date
-for (date in lDay) {
-  # Calculate standard deviation for each pixel for the given date
-  P_stdev_value <- sapply(l.df.owasis$BBB, function(Pixel) {
-    subset_data <- Pixel[Pixel$day == as.Date(date), "LAW_MS_ICOS"]
-    
-    # Check for NA and length > 0
-    if (length(na.omit(subset_data)) > 0) {
-      stdev_value <- sd(subset_data, na.rm = TRUE)
-      return(ifelse(is.nan(P_stdev_value), NA, P_stdev_value))
-    } else {
-      return(NA)
-    }
-  })
-  
-  # Identify the name of the pixel with the maximum standard deviation value for the current date
-  max_stdev_pixel_name <- names(P_stdev_values)[which.max(P_stdev_values)]
-  
-  # Store the result in the list
-  max_variation_pixel_names[[as.character(date)]] <- if (all(is.na(P_stdev_values))) NA else max_stdev_pixel_name
-}
-
-# Print the result
-print(max_variation_pixel_names)
-
-
-
-
 
 #extract buffer and pixel coordinates for analysis in GIS
 writeVector(polTowers1, "Transformed/buffer.shp", overwrite = TRUE )
