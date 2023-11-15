@@ -109,12 +109,12 @@ for(owi in lOWASIS){
 } 
 
 #Create empty list for mean and stdev values
-mean_values <- list()
-stdev_values <- list()
-median_values <- list()
-mad_values <- list()
+mean_values_BBB <- list()
+stdev_values_BBB <- list()
+median_values_BBB <- list()
+mad_values_BBB <- list()
 
-#loop to extract values for each pixel for date
+#loop to extract values for each pixel for date FOR BBB
 for (date in lDay) {
   # Extract values for each pixel for the given date each pixel being its own df
   valueForDate <- lapply(l.df.owasis$BBB, function(Pixel) {
@@ -132,26 +132,65 @@ for (date in lDay) {
   
   # Calculate the mean for the current date ignoring NA in calc
   #gives values that are NA, a NaN, otherwise calculate mean or sd
-  mean_values[[as.character(date)]] <- ifelse(length(valueForDate) > 0, mean(valueForDate, na.rm = TRUE), NaN)
-  stdev_values[[as.character(date)]] <- ifelse(length(valueForDate) > 0, sd(valueForDate, na.rm = TRUE), NaN)
-  median_values[[as.character(date)]] <- ifelse(length(valueForDate) > 0, median(valueForDate, na.rm = TRUE), NaN)
-  mad_values[[as.character(date)]] <- ifelse(length(valueForDate) > 0, mad(valueForDate, na.rm = TRUE), NaN)
+  mean_values_BBB[[as.character(date)]] <- ifelse(length(valueForDate) > 0, mean(valueForDate, na.rm = TRUE), NaN)
+  stdev_values_BBB[[as.character(date)]] <- ifelse(length(valueForDate) > 0, sd(valueForDate, na.rm = TRUE), NaN)
+  median_values_BBB[[as.character(date)]] <- ifelse(length(valueForDate) > 0, median(valueForDate, na.rm = TRUE), NaN)
+  mad_values_BBB[[as.character(date)]] <- ifelse(length(valueForDate) > 0, mad(valueForDate, na.rm = TRUE), NaN)
+}
+
+mean_values_GW <- list()
+stdev_values_GW <- list()
+median_values_GW <- list()
+mad_values_GW <- list()
+
+#Second loop for groundwater
+for (date in lDay) {
+  # Extract values for each pixel for the given date each pixel being its own df
+  valueForDate_GW <- lapply(l.df.owasis$GW, function(Pixel_GW) {
+    subset_data_GW <- Pixel_GW[Pixel_GW$day %in% as.Date(date), "LAW_MS_ICOS"]
+    if (length(subset_data_GW) > 0) {
+      return(subset_data_GW)
+    } else {
+      return(NA)
+    }
+  })
+  
+  # Check for NA
+  valueForDate_GW <- unlist(valueForDate_GW)
+  valueForDate_GW <- valueForDate_GW[!is.na(valueForDate_GW)]
+  
+  # Calculate the mean for the current date ignoring NA in calc
+  #gives values that are NA, a NaN, otherwise calculate mean or sd
+  mean_values_GW[[as.character(date)]] <- ifelse(length(valueForDate_GW) > 0, mean(valueForDate_GW, na.rm = TRUE), NaN)
+  stdev_values_GW[[as.character(date)]] <- ifelse(length(valueForDate_GW) > 0, sd(valueForDate_GW, na.rm = TRUE), NaN)
+  median_values_GW[[as.character(date)]] <- ifelse(length(valueForDate_GW) > 0, median(valueForDate_GW, na.rm = TRUE), NaN)
+  mad_values_GW[[as.character(date)]] <- ifelse(length(valueForDate_GW) > 0, mad(valueForDate_GW, na.rm = TRUE), NaN)
 }
 
 # Create a data frame with the calculated mean and standard deviation values
 #here again a fail safe for the NA/NaN values otherwise errors
-OWASIS_BBB <- data.frame(
+OWASIS_BBB_GW <- data.frame(
   Date = as.Date(lDay),
   
-  MeanBBB = sapply(mean_values, function(x) if (all(is.na(x))) NaN else mean(x)),
-  StdevBBB = sapply(stdev_values, function(x) if (all(is.na(x))) NaN else x),
-  MedianBBB = sapply(median_values, function(x) if (all(is.na(x))) NaN else x),
-  MadBBB = sapply(mad_values, function(x) if(all(is.na(x))) NaN else x)
+  MeanBBB = sapply(mean_values_BBB, function(x) if (all(is.na(x))) NaN else mean(x)),
+  StdevBBB = sapply(stdev_values_BBB, function(x) if (all(is.na(x))) NaN else x),
+  MedianBBB = sapply(median_values_BBB, function(x) if (all(is.na(x))) NaN else x),
+  MadBBB = sapply(mad_values_BBB, function(x) if(all(is.na(x))) NaN else x),
+  
+  MeanGW = sapply(mean_values_GW, function(x) if (all(is.na(x))) NaN else mean(x)),
+  StdevGW = sapply(stdev_values_GW, function(x) if (all(is.na(x))) NaN else x),
+  MedianGW = sapply(median_values_GW, function(x) if (all(is.na(x))) NaN else x),
+  MadGW = sapply(mad_values_GW, function(x) if(all(is.na(x))) NaN else x)
 )
 
+TPS_av = 0.827
+AHN_mNAP_mmv <- -1.97
+
 #calculation to WFPS
-OWASIS_BBB <- OWASIS_BBB %>% 
-  mutate(MeanWFPS = )
+OWASIS_BBB_GW <- OWASIS_BBB_GW %>% 
+  mutate(MedianGW_mmv = as.numeric(format(MedianGW - (AHN_mNAP_mmv), scientific = FALSE))) %>% 
+  mutate(MedianBBB_p = MedianBBB / (TPS_av * abs(MedianGW_mmv*1000))) %>% 
+  mutate(MedianWFPS = TPS_av - MedianBBB_p)
 
 # Print the resulting data frame
 print(OWASIS_BBB)
