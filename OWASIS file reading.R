@@ -149,6 +149,10 @@ OWASIS_BBB <- data.frame(
   MadBBB = sapply(mad_values, function(x) if(all(is.na(x))) NaN else x)
 )
 
+#calculation to WFPS
+OWASIS_BBB <- OWASIS_BBB %>% 
+  mutate(MeanWFPS = )
+
 # Print the resulting data frame
 print(OWASIS_BBB)
 
