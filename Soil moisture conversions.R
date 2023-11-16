@@ -61,18 +61,22 @@ WFPS_Sentek <- SF_n %>%
 
 #Normalizing the soil moisture
 Max_SM <- sapply(Soil_moisture, function(x) max(x, na.rm = TRUE))
-SM_norm <- function(x, max_SM){
-  ifelse(is.na(x), NA, (x/ max_SM))
+Min_SM <- sapply(Soil_moisture, function(x) min(x, na.rm = TRUE))
+
+SM_norm <- function(x, max_SM, min_SM){
+  ifelse(is.na(x), NA, (x - min_SM)/(max_SM - min_SM))
 }
 
-cols_to_normalize <- setdiff(names(SF_cor), c("datetime", "Tair"))
+cols_to_normalize <- setdiff(names(Soil_moisture), c("datetime", "Tair"))
 
 SM_n <- Soil_moisture
 
 for(col in cols_to_normalize){
   max_SM <- Max_SM[col] 
-  print(max_value)
-  SM_n[[col]] <- SM_norm(SM_n[[col]], max_SM)
+  min_SM <- Min_SM[col]
+  print(max_SM)
+  print(min_SM)
+  SM_n[[col]] <- SM_norm(SM_n[[col]], max_SM, min_SM)
 }
 
 #Make a new dataframe that contains SWC, SF and WFPS
@@ -100,10 +104,14 @@ Sentek_Norm <- Sentek_Norm %>% #remove double columns
 #Ensures the datetime is in correct formating for writing csv
 Sentek$datetime <- format(Sentek$datetime, format = "%Y-%m-%d %H:%M:%S")
 Sentek_Norm$datetime <- format(Sentek_Norm$datetime, format = "%Y-%m-%d %H:%M:%S")
+SM_n$datetime <- format(SM_n$datetime, format = "%Y-%m-%d %H:%M:%S")
 
 #Extracting dataset to CSV
-write.csv2(Sentek, file = "Langeweide_Sentek.csv", row.names = TRUE)
-write.csv2(Sentek_Norm, file = "Langeweide_Sentek_normalized.csv", row.names = TRUE)
+write.csv2(Sentek, file = "Transformed/Langeweide_Sentek.csv", row.names = TRUE)
+write.csv2(Sentek_Norm, file = "Transformed/Langeweide_Sentek_normalized.csv", row.names = TRUE)
+write.csv2(SM_n, file = "Transformed/Langeweide_normalized_SWC.csv", row.names = FALSE)
+
+test.read <- read.csv2("Transformed/Langeweide_normalized_SWC.csv")
 
 #test for Precipitation
 Precipitation <- Langeweide_data %>% 
