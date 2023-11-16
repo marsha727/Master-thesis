@@ -188,15 +188,16 @@ AHN_mNAP_mmv <- -1.97
 
 #calculation to WFPS
 OWASIS_BBB_GW <- OWASIS_BBB_GW %>% 
-  mutate(MedianGW_mmv = as.numeric(format(MedianGW - (AHN_mNAP_mmv), scientific = FALSE))) %>% 
-  mutate(MedianBBB_p = MedianBBB / (TPS_av * abs(MedianGW_mmv*1000))) %>% 
-  mutate(MedianWFPS = TPS_av - MedianBBB_p)
+  mutate(MedianGW_mmv = (MedianGW - (AHN_mNAP_mmv))) %>% 
+  mutate(MedianWFPS = (TPS_av * abs(MedianGW_mmv*1000)) - MedianBBB)
+  #mutate(MedianBBB_p = MedianBBB / (TPS_av * abs(MedianGW_mmv*1000))) %>% 
+  #mutate(MedianWFPS = TPS_av - MedianBBB_p)
 
 # Print the resulting data frame
 print(OWASIS_BBB)
 
 #just to visually check the variation
-ggplot(OWASIS_BBB, aes(x = Date)) +
+ggplot(OWASIS_BBB_GW, aes(x = Date)) +
   geom_line(aes(y = MeanBBB), color = "blue") +
   geom_line(aes(y = MedianBBB), color = "red") +
   geom_ribbon(aes(ymin = MeanBBB - StdevBBB, ymax = MeanBBB + StdevBBB), fill = "lightblue", alpha = 0.5) +
@@ -205,6 +206,23 @@ ggplot(OWASIS_BBB, aes(x = Date)) +
        x = "Date",
        y = "BBB (mm)") +
   theme_minimal()
+
+ggplot(OWASIS_BBB_GW, aes(x = Date)) +
+  geom_line(aes(y = MedianBBB_p), color = "blue") +
+  geom_line(aes(y = MedianWFPS), color = "red") +
+  labs(title = "BBB and WFPS",
+       x = "Date",
+       y = "BBB (mm)") +
+  theme_minimal()
+
+ggplot(LAW_MS_ICOS, aes(x = datetime)) +
+  geom_point(aes(y = WL_1, color = "red"), size = 0.5) +
+  geom_point(aes(y = WL_2, color = "blue"), size = 0.5) +
+  geom_point(aes(y = WL_3, color = "green"), size = 0.5) 
+
+ggplot(OWASIS_BBB_GW, aes(x = Date)) +
+  geom_line(aes(y = MeanGW))
+
 
 #Some threshold investigation compared to meean MAD
 dates_with_large_MAD <- OWASIS_BBB$Date[OWASIS_BBB$MadBBB >= 2]
