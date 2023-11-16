@@ -74,17 +74,55 @@ WFPS_tensiometer <- Tensiometer_SWC %>%
   mutate(MS_TMAP_8_D_040 = MS_TMAP_8_D_040 / WCS2) %>% 
   mutate(MS_TMAP_9_D_060 = MS_TMAP_9_D_060 / WCS3)
 
+#normalization function
+min_max_normalize <- function(x){
+  (x - min(x, na.rm = TRUE)) / (max(x, na.rm = TRUE) - min(x, na.rm = TRUE))
+}
+
+
+#normalization
+Normalization_Tensio <- Tensiometer_SWC %>% 
+  mutate(MS_TMAP_1_D_020 = min_max_normalize(MS_TMAP_2_D_030)) %>% 
+  mutate(MS_TMAP_2_D_030 = min_max_normalize(MS_TMAP_2_D_030)) %>% 
+  mutate(MS_TMAP_3_D_050 = min_max_normalize(MS_TMAP_3_D_050)) %>% 
+  
+  mutate(MS_TMAP_4_D_020 = min_max_normalize(MS_TMAP_4_D_020)) %>% 
+  mutate(MS_TMAP_5_D_040 = min_max_normalize(MS_TMAP_5_D_040)) %>% 
+  mutate(MS_TMAP_6_D_060 = min_max_normalize(MS_TMAP_6_D_060)) %>% 
+  
+  mutate(MS_TMAP_7_D_020 = min_max_normalize(MS_TMAP_7_D_020)) %>% 
+  mutate(MS_TMAP_8_D_040 = min_max_normalize(MS_TMAP_8_D_040)) %>% 
+  mutate(MS_TMAP_9_D_060 = min_max_normalize(MS_TMAP_9_D_060))
+
+#normalization
+Normalization_Tensio_kPa <- Tensiometer %>% 
+  mutate(MS_TMAP_1_D_020 = min_max_normalize(MS_TMAP_2_D_030)) %>% 
+  mutate(MS_TMAP_2_D_030 = min_max_normalize(MS_TMAP_2_D_030)) %>% 
+  mutate(MS_TMAP_3_D_050 = min_max_normalize(MS_TMAP_3_D_050)) %>% 
+  
+  mutate(MS_TMAP_4_D_020 = min_max_normalize(MS_TMAP_4_D_020)) %>% 
+  mutate(MS_TMAP_5_D_040 = min_max_normalize(MS_TMAP_5_D_040)) %>% 
+  mutate(MS_TMAP_6_D_060 = min_max_normalize(MS_TMAP_6_D_060)) %>% 
+  
+  mutate(MS_TMAP_7_D_020 = min_max_normalize(MS_TMAP_7_D_020)) %>% 
+  mutate(MS_TMAP_8_D_040 = min_max_normalize(MS_TMAP_8_D_040)) %>% 
+  mutate(MS_TMAP_9_D_060 = min_max_normalize(MS_TMAP_9_D_060))
 
 #Make sure datetime is correct format
 Tensiometer_SWC$TIMESTAMP <- format(Tensiometer_SWC$TIMESTAMP, format = "%Y:%m:%d %H:%M:%S")
 WFPS_tensiometer$TIMESTAMP <- format(Tensiometer_SWC$TIMESTAMP, format = "%Y:%m:%d %H:%M:%S")
+Normalization_Tensio$TIMESTAMP <- format(Normalization_Tensio$TIMESTAMP, format = "%Y:%m:%d %H:%M:%S")
+Normalization_Tensio_kPa$TIMESTAMP <- format(Normalization_Tensio_kPa$TIMESTAMP, format = "%Y:%m:%d %H:%M:%S")
 
 #write to a new csv file
 #Extracting dataset to CSV
 write.csv2(WFPS_tensiometer, file = "Transformed/Langeweide_Tensio_WFPS.csv", row.names = TRUE)
 write.csv2(Tensiometer_SWC, file = "Transformed/Langeweide_Tensio.csv", row.names = TRUE)
 write.csv2(Subset_Bodem_fysische_metingen, file = "Datasets/MvG_Bodem_fysische_metingen.csv", row.names = TRUE)
+write.csv2(Normalization_Tensio, file = "Transformed/Langeweide_Tensio_norm.csv", row.names = FALSE)
+write.csv2(Normalization_Tensio_kPa, file = "Transformed/Langeweide_Tensio_norm_kPa.csv", row.names = FALSE)
 
+test.read2 <- read.csv2("Transformed/Langeweide_Tensio_norm_kPa.csv")
 
 ggplot(Tensiometer_SWC, aes(x = TIMESTAMP)) +
   geom_point(aes(y = MS_TMAP_1_D_020, color = "20 cm"), size = 0.3) +
