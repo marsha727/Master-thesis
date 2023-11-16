@@ -183,18 +183,43 @@ OWASIS_BBB_GW <- data.frame(
   MadGW = sapply(mad_values_GW, function(x) if(all(is.na(x))) NaN else x)
 )
 
-TPS_av = 0.827
+TPS_av = 0.695
 AHN_mNAP_mmv <- -1.97
 
 #calculation to WFPS
 OWASIS_BBB_GW <- OWASIS_BBB_GW %>% 
   mutate(MedianGW_mmv = (MedianGW - (AHN_mNAP_mmv))) %>% 
-  mutate(MedianWFPS = (TPS_av * abs(MedianGW_mmv*1000)) - MedianBBB)
+  mutate(MedianWFPS = (TPS_av * abs(MedianGW_mmv*1000)) - MedianBBB) %>% 
+  mutate(TPS_check = MedianBBB + MedianWFPS) %>% 
+  mutate(TPS = TPS_av * abs(MedianGW_mmv*1000))
   #mutate(MedianBBB_p = MedianBBB / (TPS_av * abs(MedianGW_mmv*1000))) %>% 
   #mutate(MedianWFPS = TPS_av - MedianBBB_p)
 
-# Print the resulting data frame
-print(OWASIS_BBB)
+#normalisation function excluding NA values
+min_max_normalize <- function(x){
+  (x - min(x, na.rm = TRUE)) / (max(x, na.rm = TRUE) - min(x, na.rm = TRUE))
+}
+
+#Perform normalization function on MedianBBB
+OWASIS_BBB_GW <- OWASIS_BBB_GW %>% 
+  mutate(MedianBBB_norm = min_max_normalize(MedianBBB)) %>% 
+  mutate(MedianWFPS_norm = min_max_normalize(MedianWFPS))
+
+#Some test plots
+ggplot(OWASIS_BBB_GW) +
+  geom_line(aes(x = Date, y = MedianBBB_norm))
+
+ggplot(OWASIS_BBB_GW) +
+  geom_point(aes(x = MedianBBB, y = MedianWFPS))
+
+ggplot(OWASIS_BBB_GW) +
+  geom_line(aes(x = Date, y = TPS))
+  
+ggplot(OWASIS_BBB_GW) +
+  geom_line(aes(x = Date, y = MedianGW_mmv))
+
+ggplot(OWASIS_BBB_GW) +
+  geom_line(aes(x = MedianGW_mmv, y = TPS))
 
 #just to visually check the variation
 ggplot(OWASIS_BBB_GW, aes(x = Date)) +
@@ -208,11 +233,11 @@ ggplot(OWASIS_BBB_GW, aes(x = Date)) +
   theme_minimal()
 
 ggplot(OWASIS_BBB_GW, aes(x = Date)) +
-  geom_line(aes(y = MedianBBB_p), color = "blue") +
+  geom_line(aes(y = MedianBBB), color = "blue") +
   geom_line(aes(y = MedianWFPS), color = "red") +
   labs(title = "BBB and WFPS",
        x = "Date",
-       y = "BBB (mm)") +
+       y = "Filled pore space (mm)") +
   theme_minimal()
 
 ggplot(LAW_MS_ICOS, aes(x = datetime)) +
@@ -251,8 +276,8 @@ writeVector(polTowers1, "Transformed/buffer.shp", overwrite = TRUE )
 writeRaster(ri01, "Transformed/rbuffer.tif", overwrite = TRUE)
 
 #formating the dates for converersions
-OWASIS_BBB$Date <- format(OWASIS_BBB$Date, format = "%Y-%m-%d")
+OWASIS_BBB_GW$Date <- format(OWASIS_BBB_GW$Date, format = "%Y-%m-%d")
 
 #write csv for the BBB files
-write.csv2(OWASIS_BBB, file = "Transformed/Langeweide_OWASIS_BBB.csv", row.names = FALSE)
+write.csv2(OWASIS_BBB_GW, file = "Transformed/Langeweide_OWASIS_BBB.csv", row.names = FALSE)
 test_read <- read.csv2("Transformed/Langeweide_OWASIS_BBB.csv")
