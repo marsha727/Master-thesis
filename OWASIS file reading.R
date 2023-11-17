@@ -216,7 +216,7 @@ ggplot(OWASIS_BBB_GW) +
   geom_line(aes(x = Date, y = TPS))
   
 ggplot(OWASIS_BBB_GW) +
-  geom_line(aes(x = Date, y = MedianGW_mmv))
+  geom_line(aes(x = Date, y = MedianGW))
 
 ggplot(OWASIS_BBB_GW) +
   geom_line(aes(x = MedianGW_mmv, y = TPS))
@@ -227,10 +227,11 @@ ggplot(OWASIS_BBB_GW, aes(x = Date)) +
   geom_line(aes(y = MedianBBB), color = "red") +
   geom_ribbon(aes(ymin = MeanBBB - StdevBBB, ymax = MeanBBB + StdevBBB), fill = "lightblue", alpha = 0.5) +
   geom_ribbon(aes(ymin = MedianBBB - MadBBB, ymax = MedianBBB + MadBBB), fill = "pink", alpha = 0.5) +
-  labs(title = "Mean/median pixel values with STDEV/MAD",
+  labs(
+    title = "Mean/median pixel values with STDEV/MAD",
        x = "Date",
-       y = "BBB (mm)") +
-  theme_minimal()
+       y = "BBB (mm)"
+    )
 
 ggplot(OWASIS_BBB_GW, aes(x = Date)) +
   geom_line(aes(y = MedianBBB), color = "blue") +
@@ -279,5 +280,5 @@ writeRaster(ri01, "Transformed/rbuffer.tif", overwrite = TRUE)
 OWASIS_BBB_GW$Date <- format(OWASIS_BBB_GW$Date, format = "%Y-%m-%d")
 
 #write csv for the BBB files
-write.csv2(OWASIS_BBB_GW, file = "Transformed/Langeweide_OWASIS_BBB.csv", row.names = FALSE)
+write.csv2(OWASIS_BBB_GW, file = "Transformed/Langeweide_OWASIS_BBB_500.csv", row.names = FALSE)
 test_read <- read.csv2("Transformed/Langeweide_OWASIS_BBB.csv")
