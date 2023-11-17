@@ -61,6 +61,7 @@ Tensiometer_SWC <- Tensiometer_cmH20 %>%
   mutate(MS_TMAP_8_D_040 = WCR2 + ((WCS2 - WCR2)/((1+abs(a2 * MS_TMAP_8_D_040)^n2)^m2))) %>%
   mutate(MS_TMAP_9_D_060 = WCR3 + ((WCS3 - WCR3)/((1+abs(a3 * MS_TMAP_9_D_060)^n3)^m3)))
 
+#OLD wfps calculation
 WFPS_tensiometer <- Tensiometer_SWC %>% 
   mutate(MS_TMAP_1_D_020 = MS_TMAP_1_D_020 / WCS1) %>% 
   mutate(MS_TMAP_2_D_030 = MS_TMAP_2_D_030 / WCS1) %>% 
@@ -73,6 +74,45 @@ WFPS_tensiometer <- Tensiometer_SWC %>%
   mutate(MS_TMAP_7_D_020 = MS_TMAP_7_D_020 / WCS1) %>% 
   mutate(MS_TMAP_8_D_040 = MS_TMAP_8_D_040 / WCS2) %>% 
   mutate(MS_TMAP_9_D_060 = MS_TMAP_9_D_060 / WCS3)
+
+#AFPS in percentages as a percentage of the total pore space
+AFPS_tensiometer <- Tensiometer_SWC %>% 
+  mutate(MS_TMAP_1_D_020 = 1 - (MS_TMAP_1_D_020 / WCS1)) %>% 
+  mutate(MS_TMAP_2_D_030 = 1 - (MS_TMAP_2_D_030 / WCS1)) %>% 
+  mutate(MS_TMAP_3_D_050 = 1 - (MS_TMAP_3_D_050 / WCS2)) %>% 
+  
+  mutate(MS_TMAP_4_D_020 = 1 - (MS_TMAP_4_D_020 / WCS1)) %>% 
+  mutate(MS_TMAP_5_D_040 = 1 - (MS_TMAP_5_D_040 / WCS2)) %>% 
+  mutate(MS_TMAP_6_D_060 = 1 - (MS_TMAP_6_D_060 / WCS3)) %>% 
+  
+  mutate(MS_TMAP_7_D_020 = 1 - (MS_TMAP_7_D_020 / WCS1)) %>% 
+  mutate(MS_TMAP_8_D_040 = 1 - (MS_TMAP_8_D_040 / WCS2)) %>% 
+  mutate(MS_TMAP_9_D_060 = 1 - (MS_TMAP_9_D_060 / WCS3))
+
+#Calculate AFPS in mm
+AFPS_mm_tensiometer <- Tensiometer_SWC %>% 
+  mutate(MS_TMAP_1_D_020 = MS_TMAP_1_D_020 * WCS1 * 100) %>% 
+  mutate(MS_TMAP_2_D_030 = MS_TMAP_2_D_030 * WCS1 * 100) %>% 
+  mutate(MS_TMAP_3_D_050 = MS_TMAP_3_D_050 * WCS2 * 100) %>% 
+  
+  mutate(MS_TMAP_4_D_020 = MS_TMAP_4_D_020 * WCS1 * 100) %>% 
+  mutate(MS_TMAP_5_D_040 = MS_TMAP_5_D_040 * WCS2 * 100) %>% 
+  mutate(MS_TMAP_6_D_060 = MS_TMAP_6_D_060 * WCS3 * 100) %>% 
+  
+  mutate(MS_TMAP_7_D_020 = MS_TMAP_7_D_020 * WCS1 * 100) %>% 
+  mutate(MS_TMAP_8_D_040 = MS_TMAP_8_D_040 * WCS2 * 100) %>% 
+  mutate(MS_TMAP_9_D_060 = MS_TMAP_9_D_060 * WCS3 * 100)
+
+AFPS_mm_tensiometer$TIMESTAMP <- as.POSIXct(AFPS_mm_tensiometer$TIMESTAMP, format = "%Y-%m-%d %H:%M:%S")  
+WFPS_tensiometer$TIMESTAMP <- as.POSIXct(WFPS_tensiometer$TIMESTAMP, format = "%Y-%m-%d %H:%M:%S")
+
+ggplot(AFPS_mm_tensiometer) +
+  geom_line(aes(x = TIMESTAMP, y = MS_TMAP_7_D_020), size = 0.5)
+
+ggplot(WFPS_tensiometer) +
+  geom_line(aes(x = TIMESTAMP, y = MS_TMAP_7_D_020), size = 0.5)
+
+
 
 #normalization function
 min_max_normalize <- function(x){
