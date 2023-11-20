@@ -79,6 +79,9 @@ for(col in cols_to_normalize){
   SM_n[[col]] <- SM_norm(SM_n[[col]], max_SM, min_SM)
 }
 
+#calculating the AFPS
+
+
 #Make a new dataframe that contains SWC, SF and WFPS
 new_column_names_WFPS <- paste(names(WFPS_Sentek), "WFPS", sep = "_") #Give new colnames to differentiate
 colnames(WFPS_Sentek) <- new_column_names_WFPS
