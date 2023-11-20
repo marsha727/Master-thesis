@@ -61,23 +61,9 @@ Tensiometer_SWC <- Tensiometer_cmH20 %>%
   mutate(MS_TMAP_8_D_040 = WCR2 + ((WCS2 - WCR2)/((1+abs(a2 * MS_TMAP_8_D_040)^n2)^m2))) %>%
   mutate(MS_TMAP_9_D_060 = WCR3 + ((WCS3 - WCR3)/((1+abs(a3 * MS_TMAP_9_D_060)^n3)^m3)))
 
-#OLD wfps calculation
-WFPS_tensiometer <- Tensiometer_SWC %>% 
-  mutate(MS_TMAP_1_D_020 = MS_TMAP_1_D_020 / WCS1) %>% 
-  mutate(MS_TMAP_2_D_030 = MS_TMAP_2_D_030 / WCS1) %>% 
-  mutate(MS_TMAP_3_D_050 = MS_TMAP_3_D_050 / WCS2) %>% 
-  
-  mutate(MS_TMAP_4_D_020 = MS_TMAP_4_D_020 / WCS1) %>% 
-  mutate(MS_TMAP_5_D_040 = MS_TMAP_5_D_040 / WCS2) %>% 
-  mutate(MS_TMAP_6_D_060 = MS_TMAP_6_D_060 / WCS3) %>% 
-  
-  mutate(MS_TMAP_7_D_020 = MS_TMAP_7_D_020 / WCS1) %>% 
-  mutate(MS_TMAP_8_D_040 = MS_TMAP_8_D_040 / WCS2) %>% 
-  mutate(MS_TMAP_9_D_060 = MS_TMAP_9_D_060 / WCS3)
-
 #AFPS in percentages as a percentage of the total pore space
-AFPS_tensiometer <- Tensiometer_SWC %>% 
-  mutate(MS_TMAP_1_D_020 = 1 - (MS_TMAP_1_D_020 / WCS1)) %>% 
+AFPS_mm_tensiometer <- Tensiometer_SWC %>% 
+  mutate(MS_TMAP_1_D_020 = (1 - (MS_TMAP_1_D_020 / WCS1))) %>% 
   mutate(MS_TMAP_2_D_030 = 1 - (MS_TMAP_2_D_030 / WCS1)) %>% 
   mutate(MS_TMAP_3_D_050 = 1 - (MS_TMAP_3_D_050 / WCS2)) %>% 
   
@@ -90,7 +76,7 @@ AFPS_tensiometer <- Tensiometer_SWC %>%
   mutate(MS_TMAP_9_D_060 = 1 - (MS_TMAP_9_D_060 / WCS3))
 
 #Calculate AFPS in mm
-AFPS_mm_tensiometer <- Tensiometer_SWC %>% 
+AFPS_mm_tensiometer <- AFPS_tensiometer %>% 
   mutate(MS_TMAP_1_D_020 = MS_TMAP_1_D_020 * WCS1 * 100) %>% 
   mutate(MS_TMAP_2_D_030 = MS_TMAP_2_D_030 * WCS1 * 100) %>% 
   mutate(MS_TMAP_3_D_050 = MS_TMAP_3_D_050 * WCS2 * 100) %>% 
@@ -156,13 +142,15 @@ Normalization_Tensio_kPa$TIMESTAMP <- format(Normalization_Tensio_kPa$TIMESTAMP,
 
 #write to a new csv file
 #Extracting dataset to CSV
-write.csv2(WFPS_tensiometer, file = "Transformed/Langeweide_Tensio_WFPS.csv", row.names = TRUE)
-write.csv2(Tensiometer_SWC, file = "Transformed/Langeweide_Tensio.csv", row.names = TRUE)
-write.csv2(Subset_Bodem_fysische_metingen, file = "Datasets/MvG_Bodem_fysische_metingen.csv", row.names = TRUE)
+write.csv2(AFPS_tensiometer, file = "Transformed/Langeweide_Tensio_AFPS.csv", row.names = FALSE)
+write.csv2(AFPS_mm_tensiometer, file = "Transformed/Langeweide_Tensio_AFPS_mm.csv", row.names = FALSE)
+write.csv2(Tensiometer_SWC, file = "Transformed/Langeweide_Tensio.csv", row.names = FALSE)
+write.csv2(Subset_Bodem_fysische_metingen, file = "Datasets/MvG_Bodem_fysische_metingen.csv", row.names = FALSE)
 write.csv2(Normalization_Tensio, file = "Transformed/Langeweide_Tensio_norm.csv", row.names = FALSE)
 write.csv2(Normalization_Tensio_kPa, file = "Transformed/Langeweide_Tensio_norm_kPa.csv", row.names = FALSE)
 
-test.read2 <- read.csv2("Transformed/Langeweide_Tensio_norm_kPa.csv")
+
+test.read2 <- read.csv2("Transformed/Langeweide_Tensio_AFPS.csv")
 
 ggplot(Tensiometer_SWC, aes(x = TIMESTAMP)) +
   geom_point(aes(y = MS_TMAP_1_D_020, color = "20 cm"), size = 0.3) +
