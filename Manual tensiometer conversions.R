@@ -89,14 +89,16 @@ AFPS_mm_tensiometer <- AFPS_tensiometer %>%
   mutate(MS_TMAP_8_D_040 = MS_TMAP_8_D_040 * WCS2 * 100) %>% 
   mutate(MS_TMAP_9_D_060 = MS_TMAP_9_D_060 * WCS3 * 100)
 
-AFPS_mm_tensiometer$TIMESTAMP <- as.POSIXct(AFPS_mm_tensiometer$TIMESTAMP, format = "%Y-%m-%d %H:%M:%S")  
-WFPS_tensiometer$TIMESTAMP <- as.POSIXct(WFPS_tensiometer$TIMESTAMP, format = "%Y-%m-%d %H:%M:%S")
+#Intergrated AFPS (mm)
+AFPS_integrated_tensiometer <- AFPS_mm_tensiometer %>% 
+  mutate(Probe123_50cm = MS_TMAP_1_D_020 + MS_TMAP_2_D_030 + MS_TMAP_3_D_050) %>% 
+  
+  mutate(Probe456_60cm = MS_TMAP_4_D_020 + MS_TMAP_5_D_040 + MS_TMAP_6_D_060) %>% 
+  
+  mutate(Probe789_60cm = MS_TMAP_7_D_020 + MS_TMAP_8_D_040 + MS_TMAP_9_D_060)         
 
-ggplot(AFPS_mm_tensiometer) +
-  geom_line(aes(x = TIMESTAMP, y = MS_TMAP_7_D_020), size = 0.5)
 
-ggplot(WFPS_tensiometer) +
-  geom_line(aes(x = TIMESTAMP, y = MS_TMAP_7_D_020), size = 0.5)
+
 
 
 
@@ -104,7 +106,6 @@ ggplot(WFPS_tensiometer) +
 min_max_normalize <- function(x){
   (x - min(x, na.rm = TRUE)) / (max(x, na.rm = TRUE) - min(x, na.rm = TRUE))
 }
-
 
 #normalization
 Normalization_Tensio <- Tensiometer_SWC %>% 
