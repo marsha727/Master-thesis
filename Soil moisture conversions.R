@@ -80,7 +80,25 @@ for(col in cols_to_normalize){
 }
 
 #calculating the AFPS
+Max_values_WFPS <- sapply(WFPS_Sentek, function(x) max(x, na.rm = TRUE))
+AFPS <- function(x, max_value){
+  ifelse(is.na(x), NA, (1 - (x / max_value)) * max_value * 100)
+}
 
+#To prevent issues with length of the columns i remove the first two rows already
+cols_to_normalize_AFPS <- setdiff(names(WFPS_Sentek), c("datetime", "Tair"))
+
+#For the loop to work i already make a new dataframe for SF normalized
+AFPS_mm_SENTEK <- WFPS_Sentek
+
+#this loop apply the formula to each column that i specified earlier
+#The max value is taken for each column and specified here what value it should take in the formula
+#I added a check point to make sure the max values are differing
+for(col in cols_to_normalize_AFPS){
+  max_value_WFPS <- Max_values_WFPS[col] 
+  print(max_value_WFPS)
+  AFPS_mm_SENTEK[[col]] <- AFPS(WFPS_Sentek[[col]], max_value)
+}
 
 #Make a new dataframe that contains SWC, SF and WFPS
 new_column_names_WFPS <- paste(names(WFPS_Sentek), "WFPS", sep = "_") #Give new colnames to differentiate
@@ -110,11 +128,12 @@ Sentek_Norm$datetime <- format(Sentek_Norm$datetime, format = "%Y-%m-%d %H:%M:%S
 SM_n$datetime <- format(SM_n$datetime, format = "%Y-%m-%d %H:%M:%S")
 
 #Extracting dataset to CSV
-write.csv2(Sentek, file = "Transformed/Langeweide_Sentek.csv", row.names = TRUE)
-write.csv2(Sentek_Norm, file = "Transformed/Langeweide_Sentek_normalized.csv", row.names = TRUE)
+write.csv2(Sentek, file = "Transformed/Langeweide_Sentek.csv", row.names = FALSE)
+write.csv2(Sentek_Norm, file = "Transformed/Langeweide_Sentek_normalized.csv", row.names = FALSE)
 write.csv2(SM_n, file = "Transformed/Langeweide_normalized_SWC.csv", row.names = FALSE)
 
-test.read <- read.csv2("Transformed/Langeweide_normalized_SWC.csv")
+write.csv2(AFPS_mm_SENTEK, file = "Transformed/Langeweide_Sentek_AFPS.csv", row.names = FALSE)
+test.read <- read.csv2("Transformed/Langeweide_Sentek_AFPS.csv")
 
 #test for Precipitation
 Precipitation <- Langeweide_data %>% 
