@@ -95,7 +95,7 @@ AFPS_mm_SENTEK <- WFPS_Sentek
 #The max value is taken for each column and specified here what value it should take in the formula
 #I added a check point to make sure the max values are differing
 for(col in cols_to_normalize_AFPS){
-  max_value_WFPS <- Max_values_WFPS[col] 
+  max_value <- Max_values_WFPS[col] 
   print(max_value_WFPS)
   AFPS_mm_SENTEK[[col]] <- AFPS(WFPS_Sentek[[col]], max_value)
 }
