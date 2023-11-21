@@ -96,7 +96,7 @@ AFPS_mm_SENTEK <- WFPS_Sentek
 #I added a check point to make sure the max values are differing
 for(col in cols_to_normalize_AFPS){
   max_value <- Max_values_WFPS[col] 
-  print(max_value_WFPS)
+  print(max_value)
   AFPS_mm_SENTEK[[col]] <- AFPS(WFPS_Sentek[[col]], max_value)
 }
 
@@ -126,6 +126,7 @@ Sentek_Norm <- Sentek_Norm %>% #remove double columns
 Sentek$datetime <- format(Sentek$datetime, format = "%Y-%m-%d %H:%M:%S")
 Sentek_Norm$datetime <- format(Sentek_Norm$datetime, format = "%Y-%m-%d %H:%M:%S")
 SM_n$datetime <- format(SM_n$datetime, format = "%Y-%m-%d %H:%M:%S")
+AFPS_mm_SENTEK$datetime <- format(AFPS_mm_SENTEK$datetime, format = "%Y-%m-%d %H:%M:%S")
 
 #Extracting dataset to CSV
 write.csv2(Sentek, file = "Transformed/Langeweide_Sentek.csv", row.names = FALSE)
