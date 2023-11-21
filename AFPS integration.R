@@ -56,6 +56,42 @@ ggplot(AFPS_int_TENSIO) +
 ggplot(OWASIS_BBB) +
   geom_line(aes(x = Date, y = MedianBBB))
 
+ggplot(AFPS_TENSIO) +
+  geom_point(aes(x = TIMESTAMP, y = MS_TMAP_2_D_030))
+
+
+
+
+
+Depth20 <- cbind(Depth20_14, Depth20_17)
+
+ggplot(AFPS_TENSIO) +
+  geom_point(aes(x = TIMESTAMP, y = MS_TMAP_1_D_020, color = "1"), size = 0.5) +
+  geom_point(aes(x = TIMESTAMP, y = MS_TMAP_4_D_020, color = "4"), size = 0.5) +
+  geom_point(aes(x = TIMESTAMP, y = MS_TMAP_7_D_020, color = "7"), size = 0.5) +
+  scale_color_manual(
+    values = c("1" = "tomato", "4" = "skyblue", "7" = "orange"),
+    name = "Measurement device"
+  ) +
+  theme(
+    legend.title = element_text(size = 8),
+    legend.text = element_text(size = 7),
+    legend.key.width = unit(0.5, "cm")
+  )
+
+ggplot(AFPS_TENSIO) +
+  geom_point(aes(x = TIMESTAMP, y = MS_TMAP_1_D_020, color = "1"), size = 0.5) +
+  geom_point(aes(x = TIMESTAMP, y = MS_TMAP_2_D_030, color = "2"), size = 0.5) +
+  geom_point(aes(x = TIMESTAMP, y = MS_TMAP_3_D_050, color = "3"), size = 0.5) +
+  scale_color_manual(
+    values = c("1" = "tomato", "2" = "skyblue", "3" = "orange"),
+    name = "Measurement device"
+  ) +
+  theme(
+    legend.title = element_text(size = 8),
+    legend.text = element_text(size = 7),
+    legend.key.width = unit(0.5, "cm")
+  )
 
 
 
