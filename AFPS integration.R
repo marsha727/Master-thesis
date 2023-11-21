@@ -1,7 +1,7 @@
 library(tidyverse)
 
 AFPS_SENTEK <- read.csv2("Transformed/Langeweide_Sentek_AFPS.csv")
-AFPS_TENSIO <- read.csv2("Transformed/Langeweide_Tensio_AFPS_mm.csv")
+AFPS_TENSIO <- read.csv2("Transformed/Langeweide_Tensio_AFPS_mm_200.csv")
 OWASIS_BBB <- read.csv2("Transformed/Langeweide_OWASIS_BBB.csv")
 
 AFPS_SENTEK$datetime <- as.POSIXct(AFPS_SENTEK$datetime, format = "%Y-%m-%d %H:%M:%S")
