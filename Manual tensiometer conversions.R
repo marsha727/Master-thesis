@@ -62,7 +62,7 @@ Tensiometer_SWC <- Tensiometer_cmH20 %>%
   mutate(MS_TMAP_9_D_060 = WCR3 + ((WCS3 - WCR3)/((1+abs(a3 * MS_TMAP_9_D_060)^n3)^m3)))
 
 #AFPS in percentages as a percentage of the total pore space
-AFPS_mm_tensiometer <- Tensiometer_SWC %>% 
+AFPS_tensiometer <- Tensiometer_SWC %>% 
   mutate(MS_TMAP_1_D_020 = (1 - (MS_TMAP_1_D_020 / WCS1))) %>% 
   mutate(MS_TMAP_2_D_030 = 1 - (MS_TMAP_2_D_030 / WCS1)) %>% 
   mutate(MS_TMAP_3_D_050 = 1 - (MS_TMAP_3_D_050 / WCS2)) %>% 
@@ -88,19 +88,6 @@ AFPS_mm_tensiometer <- AFPS_tensiometer %>%
   mutate(MS_TMAP_7_D_020 = MS_TMAP_7_D_020 * WCS1 * 100) %>% 
   mutate(MS_TMAP_8_D_040 = MS_TMAP_8_D_040 * WCS2 * 100) %>% 
   mutate(MS_TMAP_9_D_060 = MS_TMAP_9_D_060 * WCS3 * 100)
-
-#Intergrated AFPS (mm)
-AFPS_integrated_tensiometer <- AFPS_mm_tensiometer %>% 
-  mutate(Probe123_50cm = MS_TMAP_1_D_020 + MS_TMAP_2_D_030 + MS_TMAP_3_D_050) %>% 
-  
-  mutate(Probe456_60cm = MS_TMAP_4_D_020 + MS_TMAP_5_D_040 + MS_TMAP_6_D_060) %>% 
-  
-  mutate(Probe789_60cm = MS_TMAP_7_D_020 + MS_TMAP_8_D_040 + MS_TMAP_9_D_060)         
-
-
-
-
-
 
 #normalization function
 min_max_normalize <- function(x){
@@ -140,6 +127,8 @@ Tensiometer_SWC$TIMESTAMP <- format(Tensiometer_SWC$TIMESTAMP, format = "%Y:%m:%
 WFPS_tensiometer$TIMESTAMP <- format(Tensiometer_SWC$TIMESTAMP, format = "%Y:%m:%d %H:%M:%S")
 Normalization_Tensio$TIMESTAMP <- format(Normalization_Tensio$TIMESTAMP, format = "%Y:%m:%d %H:%M:%S")
 Normalization_Tensio_kPa$TIMESTAMP <- format(Normalization_Tensio_kPa$TIMESTAMP, format = "%Y:%m:%d %H:%M:%S")
+AFPS_tensiometer$TIMESTAMP <- format(AFPS_tensiometer$TIMESTAMP, format = "%Y-%m-%d %H:%M:%S")
+AFPS_mm_tensiometer$TIMESTAMP <- format(AFPS_tensiometer$TIMESTAMP, format = "%Y-%m-%d %H:%M:%S")
 
 #write to a new csv file
 #Extracting dataset to CSV
@@ -151,7 +140,7 @@ write.csv2(Normalization_Tensio, file = "Transformed/Langeweide_Tensio_norm.csv"
 write.csv2(Normalization_Tensio_kPa, file = "Transformed/Langeweide_Tensio_norm_kPa.csv", row.names = FALSE)
 
 
-test.read2 <- read.csv2("Transformed/Langeweide_Tensio_AFPS.csv")
+test.read2 <- read.csv2("Transformed/Langeweide_Tensio_AFPS_mm.csv")
 
 ggplot(Tensiometer_SWC, aes(x = TIMESTAMP)) +
   geom_point(aes(y = MS_TMAP_1_D_020, color = "20 cm"), size = 0.3) +
