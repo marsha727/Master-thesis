@@ -19,7 +19,7 @@ hist(ET$ET, main = "Histogram ET", xlab = "Values", ylab = "Frequency", col = "l
 
 boxplot(ET$ET)
 
-boxplot(ET$ET ~ ET$RAIN, ET = ET)
+boxplot(ET$ET ~ ET$Tdew_EP, ET = ET)
 
 ggplot(ET) +
   geom_point(aes(x = datetime, y = Tair, color = "Tair"), size = 0.5) +
@@ -28,10 +28,21 @@ ggplot(ET) +
     values = c("Tair" = "tomato", "Tdew" = "skyblue")
   )
 
+Rain_data <- ET %>% 
+  filter(RAIN > 0)
+
+rain_start_times <- Rain_data$datetime
+rain_end_times <- Rain_data$datetime + as.difftime(6, format = "%H", units = "hours")
+
+rain_start_times <- format(rain_start_times, "%Y-%m-%d %H:%M:%S")
+rain_end_times <- format(rain_end_times, "%Y-%m-%d %H:%M:%S")
+
+ET_test <- ET %>% 
+  filter(!(datetime >= rain_start_times & datetime <= rain_end_times))
 
 
 ggplot(ET) +
-  geom_point(aes(x = datetime, y = ET))
+  geom_line(aes(x = datetime, y = ET))
 
 
 
