@@ -63,34 +63,15 @@ outliers_rosner <- data.frame(ET[outliers_rosner, ])
 
 ET_filtered_rosner <- ET[-outliers_rosner_row, ]
 
-
-ggplot(ET) +
-  geom_point(aes(x = datetime, y = Tair, color = "Tair"), size = 0.5) +
-  geom_line(aes(x = datetime, y = Tdew_EP, color = "Tdew"), size = 0.5) +
-  scale_color_manual(
-    values = c("Tair" = "tomato", "Tdew" = "skyblue")
-  )
-
-Rain_data <- ET %>% 
-  filter(RAIN > 0)
-
-rain_start_times <- Rain_data$datetime
-rain_end_times <- Rain_data$datetime + as.difftime(6, format = "%H", units = "hours")
-
-rain_start_times <- format(rain_start_times, "%Y-%m-%d %H:%M:%S")
-rain_end_times <- format(rain_end_times, "%Y-%m-%d %H:%M:%S")
-
-ET_test <- ET %>% 
-  filter(!(datetime >= rain_start_times & datetime <= rain_end_times))
-
+#getting all negative values
 ET_neg <- ET %>% 
   filter(ET < 0)
 
 
-ggplot(ET_d) +
-  geom_line(aes(x = datetime, y = ET))
+#after filtering daily values can be computed
 
-ET_d <- ET %>%  
+#daily sum of ET
+ET_d <- ET_filtered_rosner %>%  
   group_by(datetime = format(datetime, "%Y-%m-%d")) %>% 
   summarise(Tair = mean(Tair, na.rm = T), 
             ET = sum(ET, na.rm = T), 
@@ -103,32 +84,53 @@ ET_d <- ET %>%
             Ustar = mean(Ustar, na.rm = T),
             bowen_ratio = mean(bowen_ratio, na.rm = T))
 
-ET_outliers_d <- outliers_ET %>%  
-  group_by(datetime = format(datetime, "%Y-%m-%d")) %>% 
-  summarise(Tair = mean(Tair, na.rm = T), 
-            ET = sum(ET, na.rm = T), 
-            VPD = mean(VPD, na.rm = T), 
-            RH = mean(RH, na.rm = T),
-            Tdew_EP = mean(Tdew_EP, na.rm= T),
-            RAIN = mean(RAIN, na.rm = T),
-            WIND = mean(WIND, na.rm = T),
-            SWIN = mean(SWIN, na.rm = T))
-
-ET_n <- ET %>% 
-  filter(datetime >= sunset | datetime <= sunrise) %>% 
-  group_by(datetime = format(datetime, "%Y-%m-%d")) %>% 
-  summarise(Tair = mean(Tair, na.rm = T), 
-            ET = sum(ET, na.rm = T), 
-            VPD = mean(VPD, na.rm = T), 
-            RH = mean(RH, na.rm = T),
-            Tdew_EP = mean(Tdew_EP, na.rm= T),
-            SWIN = mean(SWIN, na.rm = T))
-
+#yearly sum of ET
 ET_y <- ET %>% 
   summarise(Tair = mean(Tair, na.rm = T), ET = sum(ET, na.rm = T), VPD = mean(VPD, na.rm = T), RH = mean(RH, na.rm = T))
 
+#make sure new datetime is in correct formatting
 ET_d$datetime <- as.POSIXct(ET_d$datetime, format = "%Y-%m-%d")
 ET_n$datetime <- as.POSIXct(ET_n$datetime, format = "%Y-%m-%d")
+
+
+#Checking relationships
+
+#filtered ET overtime
+ggplot(ET_filtered_rosner) +
+  geom_point(aes(x = datetime, y = ET, color = "ET")) +
+  labs(
+    title = "half hourly ET",
+    x = "datetime",
+    y = "ET (mm)"
+  ) +
+  scale_color_manual(
+    values = c("ET" = "darkblue"),
+    name = "Legend"
+  ) +
+  theme(
+    plot.title = element_text(size = 18, hjust = 0.5),
+    legend.title = element_text(size = 10),
+    legend.text = element_text(size = 9),
+  )
+
+#daily sum ET filtered
+ggplot(ET_d) +
+  geom_line(aes(x = datetime, y = ET, color = "ET"), size = 0.55) +
+  labs(
+    title = "daily ET",
+    x = "datetime",
+    y = "ET (mm/d)"
+  ) +
+  scale_color_manual(
+    values = c("ET" = "darkblue"),
+    name = "Legend"
+  ) +
+  theme(
+    plot.title = element_text(size = 18, hjust = 0.5),
+    legend.title = element_text(size = 10),
+    legend.text = element_text(size = 9),
+  )
+
 
 ggplot(ET) +
   geom_point(aes(x = RH, y = VPD))
