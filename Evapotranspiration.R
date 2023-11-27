@@ -79,7 +79,7 @@ ET_d <- ET_p_filtered %>%
     VPD = ifelse(sum(!is.na(VPD)) >= 36, mean(VPD, na.rm = TRUE), NA),
     RH = ifelse(sum(!is.na(RH)) >= 36, mean(RH, na.rm = TRUE), NA),
     Tdew_EP = ifelse(sum(!is.na(Tdew_EP)) >= 36, mean(Tdew_EP, na.rm = TRUE), NA),
-    RAIN = ifelse(sum(!is.na(RAIN)) >= 36, mean(RAIN, na.rm = TRUE), NA),
+    RAIN = ifelse(sum(!is.na(RAIN)) >= 36, sum(RAIN, na.rm = TRUE), NA),
     WIND = ifelse(sum(!is.na(WIND)) >= 36, mean(WIND, na.rm = TRUE), NA),
     SWIN = ifelse(sum(!is.na(SWIN)) >= 36, mean(SWIN, na.rm = TRUE), NA),
     Ustar = ifelse(sum(!is.na(Ustar)) >= 36, mean(Ustar, na.rm = TRUE), NA),
@@ -110,6 +110,14 @@ RH_measurements_d$datetime <- as.POSIXct(RH_measurements_d$datetime, format = "%
 
 RH_measurements_neg <- RH_measurements_d %>% 
   filter(datetime %in% Sat_dates$datetime)
+
+
+#lets test for Tair = Tdew conditions and P > 0 conditions
+RH_check <- ET_neg %>% 
+  filter(RH > 95) %>% 
+  filter(abs(Tdew_EP - Tair) > 1 & RAIN == 0 | abs(Tdew_EP - Tair) > 2)
+
+ET_p_filtered[RH_check, -which(names(ET) == "datetime")] <- NA
 
 
 #yearly sum of ET
