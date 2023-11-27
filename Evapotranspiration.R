@@ -1,4 +1,5 @@
 library(tidyverse)
+library(EnvStats)
 
 Langeweide_data <- readRDS("Datasets/LAW_MS_ICOS.rds")
 
@@ -43,6 +44,10 @@ outlier_p <- which(ET$ET < lower_bound | ET$ET > upper_bound)
 
 outlier_p_ET <- data.frame(ET[outlier_p, ])
 
+ET_p_filtered <- ET
+
+ET_p_filtered[outlier_p, -which(names(ET) == "datetime")] <- NA
+
 #Z scores???
 ET_z <- scale(ET$ET)
 
@@ -52,37 +57,60 @@ hist(ET_z$V1)
 lower_bound_h <- median(ET$ET, na.rm = TRUE) - 3 * mad(ET$ET, constant = 1, na.rm = TRUE)
 upper_bound_h <- median(ET$ET, na.rm = TRUE) + 3 * mad(ET$ET, constant = 1, na.rm = TRUE)
 
-#Rosner test, this is actually nice
-test <- rosnerTest(ET$ET, k = 308)
+#Rosner test, this is actually nice but not good for non normal distrubution
+Rosners_test <- rosnerTest(ET$ET, k = 308)
 
-results_rosner <- test$all.stats
+results_rosner <- Rosners_test$all.stats
 
 outliers_rosner_row <- results_rosner$Obs.Num[results_rosner$Outlier]
 
-outliers_rosner <- data.frame(ET[outliers_rosner, ])
+outliers_rosner <- data.frame(ET[outliers_rosner_row, ])
 
 ET_filtered_rosner <- ET[-outliers_rosner_row, ]
 
-#getting all negative values
-ET_neg <- ET %>% 
-  filter(ET < 0)
-
-
 #after filtering daily values can be computed
 
-#daily sum of ET
-ET_d <- ET_filtered_rosner %>%  
+#daily values but ensure to exclude days with too few data points
+ET_d <- ET_p_filtered %>%
+  group_by(datetime = format(datetime, "%Y-%m-%d")) %>%
+  summarise(
+    Tair = ifelse(sum(!is.na(Tair)) >= 36, mean(Tair, na.rm = TRUE), NA),
+    ET = ifelse(sum(!is.na(ET)) >= 36, sum(ET, na.rm = TRUE), NA),
+    VPD = ifelse(sum(!is.na(VPD)) >= 36, mean(VPD, na.rm = TRUE), NA),
+    RH = ifelse(sum(!is.na(RH)) >= 36, mean(RH, na.rm = TRUE), NA),
+    Tdew_EP = ifelse(sum(!is.na(Tdew_EP)) >= 36, mean(Tdew_EP, na.rm = TRUE), NA),
+    RAIN = ifelse(sum(!is.na(RAIN)) >= 36, mean(RAIN, na.rm = TRUE), NA),
+    WIND = ifelse(sum(!is.na(WIND)) >= 36, mean(WIND, na.rm = TRUE), NA),
+    SWIN = ifelse(sum(!is.na(SWIN)) >= 36, mean(SWIN, na.rm = TRUE), NA),
+    Ustar = ifelse(sum(!is.na(Ustar)) >= 36, mean(Ustar, na.rm = TRUE), NA),
+    bowen_ratio = ifelse(sum(!is.na(bowen_ratio)) >= 36, mean(bowen_ratio, na.rm = TRUE), NA)
+  )
+
+#Filter for the negative values
+ET_neg <- ET_d %>% 
+  filter(ET < 0)
+
+#test if these high RH are also present in other RH measurements
+Sat_dates <- ET_neg %>% 
+  select(datetime)
+
+RH_measurements <- Langeweide_data %>% 
+  select(datetime, RH, RH_NOBV1, RH_NOBV2, RH_KNMI)
+
+RH_measurements_d <- RH_measurements %>% 
   group_by(datetime = format(datetime, "%Y-%m-%d")) %>% 
-  summarise(Tair = mean(Tair, na.rm = T), 
-            ET = sum(ET, na.rm = T), 
-            VPD = mean(VPD, na.rm = T), 
-            RH = mean(RH, na.rm = T),
-            Tdew_EP = mean(Tdew_EP, na.rm= T),
-            RAIN = mean(RAIN, na.rm = T),
-            WIND = mean(WIND, na.rm = T),
-            SWIN = mean(SWIN, na.rm = T),
-            Ustar = mean(Ustar, na.rm = T),
-            bowen_ratio = mean(bowen_ratio, na.rm = T))
+  summarise(
+    RH = ifelse(sum(!is.na(RH)) >= 36, mean(RH, na.rm = TRUE), NA),
+    RH_NOBV1 = ifelse(sum(!is.na(RH_NOBV1)) >= 36, mean(RH_NOBV1, na.rm = TRUE), NA),
+    RH_NOBV2 = ifelse(sum(!is.na(RH_NOBV2)) >= 36, mean(RH_NOBV2, na.rm = TRUE), NA),
+    RH_KNMI = ifelse(sum(!is.na(RH_KNMI)) >= 18, mean(RH_KNMI, na.rm = TRUE), NA),
+  )
+
+RH_measurements_d$datetime <- as.POSIXct(RH_measurements_d$datetime, format = "%Y-%m-%d")
+
+RH_measurements_neg <- RH_measurements_d %>% 
+  filter(datetime %in% Sat_dates$datetime)
+
 
 #yearly sum of ET
 ET_y <- ET %>% 
