@@ -24,7 +24,7 @@ boxplot(ET$ET)
 boxplot(ET$ET ~ ET$Ustar, ET = ET)
 
 #Tukey's method
-qnt <- quantile(ET$ET, na.rm = T)
+{qnt <- quantile(ET$ET, na.rm = T)
 iqr <- IQR(ET$ET, na.rm = T)
 
 lower <- qnt[2] - 1.5 * iqr
@@ -35,6 +35,7 @@ outliers <- ET$ET < lower | ET$ET > upper
 outliers_ET <- data.frame(ET[outliers, ])
 
 ET_filtered <- ET[!outliers, ]
+}
 
 #Percentiles = closer to the boxplot quantiles
 lower_bound <- quantile(ET$ET, na.rm = TRUE, 0.01)
@@ -46,19 +47,15 @@ outlier_p_ET <- data.frame(ET[outlier_p, ])
 
 ET_p_filtered <- ET
 
-ET_p_filtered[outlier_p, -which(names(ET) == "datetime")] <- NA
-
-#Z scores???
-ET_z <- scale(ET$ET)
-
-hist(ET_z$V1)
+ET_p_filtered[outlier_p, "ET"] <- NA
 
 #Hampel filter dont like this one
-lower_bound_h <- median(ET$ET, na.rm = TRUE) - 3 * mad(ET$ET, constant = 1, na.rm = TRUE)
+{lower_bound_h <- median(ET$ET, na.rm = TRUE) - 3 * mad(ET$ET, constant = 1, na.rm = TRUE)
 upper_bound_h <- median(ET$ET, na.rm = TRUE) + 3 * mad(ET$ET, constant = 1, na.rm = TRUE)
+}
 
 #Rosner test, this is actually nice but not good for non normal distrubution
-Rosners_test <- rosnerTest(ET$ET, k = 308)
+{Rosners_test <- rosnerTest(ET$ET, k = 308)
 
 results_rosner <- Rosners_test$all.stats
 
@@ -67,6 +64,7 @@ outliers_rosner_row <- results_rosner$Obs.Num[results_rosner$Outlier]
 outliers_rosner <- data.frame(ET[outliers_rosner_row, ])
 
 ET_filtered_rosner <- ET[-outliers_rosner_row, ]
+}
 
 #after filtering daily values can be computed
 
@@ -117,7 +115,9 @@ RH_check <- ET_neg %>%
   filter(RH > 95) %>% 
   filter(abs(Tdew_EP - Tair) > 1 & RAIN == 0 | abs(Tdew_EP - Tair) > 2)
 
-ET_p_filtered[RH_check, -which(names(ET) == "datetime")] <- NA
+matching_row <- which(ET_d$datetime %in% RH_check$datetime) 
+
+ET_d[matching_row, "ET"] <- NA
 
 
 #yearly sum of ET
