@@ -120,9 +120,11 @@ lm_models <- tensio_long %>%
   map(fit_lm_by_time)
 
 # Create a data frame for prediction with all combinations of Depth and TIMESTAMP
-Depths_to_interpolate <- unique(tensio_long$Depth)
+Depths_to_interpolate <- as.numeric(seq(20, 60, by = 1))
 Times_to_interpolate <- unique(tensio_long$TIMESTAMP)
 new_data <- expand.grid(Depth = Depths_to_interpolate, TIMESTAMP = Times_to_interpolate)
+
+
 
 # Predict values using the fitted linear models
 predict_values <- map(lm_models, ~ predict(.x, newdata = new_data))
