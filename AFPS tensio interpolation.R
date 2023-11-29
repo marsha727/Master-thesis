@@ -68,6 +68,7 @@ tensio_long <- tensio_2 %>%
   select(-Column)
 
 tensio_long$Depth <- as.numeric(tensio_long$Depth)
+tensio_long$TIMESTAMP <- as.POSIXct(tensio_long$TIMESTAMP)
 
 #linear model for soil matrix potential and depth
 lm_depth_MP <- lm(SoilMatrixPotential ~ Depth + TIMESTAMP, data = tensio_long )
@@ -75,14 +76,19 @@ lm_depth_MP <- lm(SoilMatrixPotential ~ Depth + TIMESTAMP, data = tensio_long )
 Depths_to_interpolate <- seq(20, 60, by = 1)
 Times_to_interpolate <- unique(tensio_long$TIMESTAMP)
 
-new_data <- expand.grid(Depth = Depths_to_interpolate, TIMESTAMP = Times_to_interpolate)
+new_data <- data.frame(Depth = rep(Depths_to_interpolate, each = length(Times_to_interpolate)))
+
+new_data$TIMESTAMP <- rep(seq(min(tensio_long$TIMESTAMP), max(tensio_long$TIMESTAMP),
+                              length.out = length(unique(tensio_long$TIMESTAMP))),
+                              times = length(Depths_to_interpolate))
+
+#new_data <- expand.grid(Depth = Depths_to_interpolate, TIMESTAMP = Times_to_interpolate)
 
 predict_values <- predict(lm_depth_MP, newdata = new_data)
 
 predicted_tensio <- data.frame(
-  Depth = rep(Depths_to_interpolate, each = length(Times_to_interpolate)),
-  TIMESTAMP = rep(Times_to_interpolate, each = length(Depths_to_interpolate)),
+  Depth = rep(Depths_to_interpolate, each = length(unique(tensio_long$TIMESTAMP))),
+  TIMESTAMP = rep(unique(tensio_long$TIMESTAMP), times = length(Depths_to_interpolate)),
   SoilMatrixPotential = predict_values
 )
 
-predicted_tensio$TIMESTAMP <- as.POSIXct(predicted_tensio$TIMESTAMP, format = "%Y-%m-%d %H:%M:%S")
