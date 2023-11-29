@@ -1,6 +1,7 @@
 #Subscript for tensiometer interpolation
 
 library(tidyverse)
+library(purrr)
 
 tensio <- read.csv("Datasets/LAW_TENS_2020-2023_clean.csv")
 
@@ -54,7 +55,7 @@ interp_data$InteractionTerm <- interaction(interp_data$Depth, interp_data$Time)
 interp_data$Value <- predict(model, newdata = interp_data)
 } 
 
-#new options
+{#new options
 tensio_2 <- tensio %>% 
   select(TIMESTAMP, MS_TMAP_4_D_020, MS_TMAP_5_D_040, MS_TMAP_6_D_060) %>% 
   rename(Depth_20 = MS_TMAP_4_D_020, Depth_40 = MS_TMAP_5_D_040, Depth_60 = MS_TMAP_6_D_060)
@@ -71,7 +72,7 @@ tensio_long$Depth <- as.numeric(tensio_long$Depth)
 tensio_long$TIMESTAMP <- as.POSIXct(tensio_long$TIMESTAMP)
 
 #linear model for soil matrix potential and depth
-lm_depth_MP <- lm(SoilMatrixPotential ~ Depth + TIMESTAMP, data = tensio_long )
+lm_depth_MP <- lm(SoilMatrixPotential ~ TIMESTAMP + Depth, data = tensio_long )
 
 Depths_to_interpolate <- seq(20, 60, by = 1)
 Times_to_interpolate <- unique(tensio_long$TIMESTAMP)
@@ -91,4 +92,47 @@ predicted_tensio <- data.frame(
   TIMESTAMP = rep(unique(tensio_long$TIMESTAMP), times = length(Depths_to_interpolate)),
   SoilMatrixPotential = predict_values
 )
+}
+
+{#new options
+tensio_2 <- tensio %>% 
+  select(TIMESTAMP, MS_TMAP_4_D_020, MS_TMAP_5_D_040, MS_TMAP_6_D_060) %>% 
+  rename(Depth_20 = MS_TMAP_4_D_020, Depth_40 = MS_TMAP_5_D_040, Depth_60 = MS_TMAP_6_D_060)
+
+#create a new tensio file that sorts all SMP values in one column and a depth
+tensio_long <- tensio_2 %>% 
+  pivot_longer(cols = -TIMESTAMP,
+               names_to = "Column",
+               values_to = "SoilMatrixPotential") %>% 
+  mutate(Depth = str_extract(Column, "\\d+$")) %>% 
+  select(-Column)
+
+tensio_long$SoilMatrixPotential <- ave(tensio_long$SoilMatrixPotential, tensio_long$Depth, FUN = function(x) cumsum(!is.na(x)))
+
+# Function to fit linear model for each time step
+fit_lm_by_time <- function(data) {
+  lm(SoilMatrixPotential ~ Depth, data = data)
+}
+
+# Fit separate linear models for each time step
+lm_models <- tensio_long %>%
+  group_split(TIMESTAMP) %>%
+  map(fit_lm_by_time)
+
+# Create a data frame for prediction with all combinations of Depth and TIMESTAMP
+Depths_to_interpolate <- unique(tensio_long$Depth)
+Times_to_interpolate <- unique(tensio_long$TIMESTAMP)
+new_data <- expand.grid(Depth = Depths_to_interpolate, TIMESTAMP = Times_to_interpolate)
+
+# Predict values using the fitted linear models
+predict_values <- map(lm_models, ~ predict(.x, newdata = new_data))
+
+# Combine the predicted values into a data frame
+predicted_tensio <- data.frame(
+  Depth = rep(Depths_to_interpolate, each = length(Times_to_interpolate)),
+  TIMESTAMP = rep(Times_to_interpolate, times = length(Depths_to_interpolate)),
+  SoilMatrixPotential = predict_values
+)
+}
+
 
