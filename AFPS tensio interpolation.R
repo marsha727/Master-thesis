@@ -164,8 +164,11 @@ tensio_long3 <- tibble(date = as.POSIXct(tensio_3$TIMESTAMP),
                        Depth6_0 = tensio_3$MS_TMAP_9_D_060)
 
 #First i say which depths to interpolate (= every 1 cm) then i say do each depth at every date
-Depths_to_interpolate <- sort(unique(c(c(20, 40, 60), seq(ceiling(20), floor(60), 1))))
-Depths_to_interpolate <- crossing(date = unique(tensio_long2$date), depth = Depths_to_interpolate)
+Depths_to_interpolate2 <- sort(unique(c(c(20, 40, 60), seq(ceiling(20), floor(60), 1))))
+Depths_to_interpolate2 <- crossing(date = unique(tensio_long2$date), depth = Depths_to_interpolate2)
+
+Depths_to_interpolate3 <- sort(unique(c(c(20, 40, 60), seq(ceiling(20), floor(60), 1))))
+Depths_to_interpolate3 <- crossing(date = unique(tensio_long3$date), depth = Depths_to_interpolate3)
 
 #linear interpolation  
 {#tensio_interp <- tensio_long %>% 
@@ -185,11 +188,11 @@ Depths_to_interpolate <- crossing(date = unique(tensio_long2$date), depth = Dept
 tensio_interp2 <- tensio_long2 %>% 
   gather(depth, value, -date) %>% 
   mutate(depth = as.numeric(gsub("\\D", "", depth))) %>% 
-  full_join(Depths_to_interpolate) %>% 
+  full_join(Depths_to_interpolate2) %>% 
   arrange(date, depth) %>% 
   group_by(date) %>% 
   mutate(value.interp = if(length(na.omit(value)) > 1) { 
-    spline(depth, value, xout = depth)$y
+    approx(depth, value, xout = depth)$y
   } else{
     value
   })
@@ -198,11 +201,28 @@ tensio_interp2 <- tensio_long2 %>%
 tensio_interp3 <- tensio_long3 %>% 
   gather(depth, value, -date) %>% 
   mutate(depth = as.numeric(gsub("\\D", "", depth))) %>% 
-  full_join(Depths_to_interpolate) %>% 
+  full_join(Depths_to_interpolate3) %>% 
   arrange(date, depth) %>% 
   group_by(date) %>% 
   mutate(value.interp = if(length(na.omit(value)) > 1) { 
-    spline(depth, value, xout = depth)$y
+    approx(depth, value, xout = depth)$y
   } else{
     value
   })
+
+
+#filter for combination
+tensio_interp2 <- tensio_interp2 %>% 
+  select(date, depth, value.interp) %>% 
+  rename(date_2 = date, depth_2 = depth, SMP_2 = value.interp)
+
+tensio_interp3 <- tensio_interp3 %>% 
+  select(date, depth, value.interp) %>% 
+  rename(date_3 = date, depth_3 = depth, SMP_3 = value.interp)
+
+
+#combine datasets
+combine_tensio <- bind_cols(tensio_interp2, tensio_interp3)
+
+#Now perform the conversions
+
