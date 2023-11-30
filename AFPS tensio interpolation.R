@@ -120,11 +120,9 @@ lm_models <- tensio_long %>%
   map(fit_lm_by_time)
 
 # Create a data frame for prediction with all combinations of Depth and TIMESTAMP
-Depths_to_interpolate <- as.numeric(seq(20, 60, by = 1))
+Depths_to_interpolate <- as.numeric(seq(20, 60, by = 2))
 Times_to_interpolate <- unique(tensio_long$TIMESTAMP)
 new_data <- expand.grid(Depth = Depths_to_interpolate, TIMESTAMP = Times_to_interpolate)
-
-
 
 # Predict values using the fitted linear models
 predict_values <- map(lm_models, ~ predict(.x, newdata = new_data))
@@ -136,5 +134,56 @@ predicted_tensio <- data.frame(
   SoilMatrixPotential = predict_values
 )
 }
+
+#Interpolation method
+
+#make subselection for tensio point 2 and 3
+tensio_2 <- tensio %>% 
+  select(TIMESTAMP, MS_TMAP_4_D_020, MS_TMAP_5_D_040, MS_TMAP_6_D_060)
+
+#replace 1 NA with previous value to prevent error
+tensio_2$MS_TMAP_4_D_020 <- ifelse(is.na(tensio_2$MS_TMAP_4_D_020), lag(tensio_2$MS_TMAP_4_D_020), tensio_2$MS_TMAP_4_D_020)
+tensio_2$MS_TMAP_5_D_040 <- ifelse(is.na(tensio_2$MS_TMAP_5_D_040), lag(tensio_2$MS_TMAP_5_D_040), tensio_2$MS_TMAP_5_D_040)
+tensio_2$MS_TMAP_6_D_060 <- ifelse(is.na(tensio_2$MS_TMAP_6_D_060), lag(tensio_2$MS_TMAP_6_D_060), tensio_2$MS_TMAP_6_D_060)
+
+tensio_long <- tibble(date = seq(as.POSIXct("2022-04-02 00:00:00"),
+                                 as.POSIXct("2023-02-28 22:00:00"),
+                                 by = "30 mins"),
+                      Depth_20 = tensio_2$MS_TMAP_4_D_020,
+                      Depth_40 = tensio_2$MS_TMAP_5_D_040,
+                      Depth6_0 = tensio_2$MS_TMAP_6_D_060)
+
+#First i say which depths to interpolate (= every 1 cm) then i say do each depth at every date
+Depths_to_interpolate <- sort(unique(c(c(20, 40, 60), seq(ceiling(20), floor(60), 1))))
+Depths_to_interpolate <- crossing(date = unique(tensio_long$date), depth = Depths_to_interpolate)
+  
+tensio_interp <- tensio_long %>% 
+  gather(depth, value, -date) %>% 
+  mutate(depth = as.numeric(gsub("\\D", "", depth))) %>% 
+  full_join(Depths_to_interpolate) %>% 
+  arrange(date, depth) %>% 
+  group_by(date) %>% 
+  mutate(value.interp = if(length(na.omit(value)) > 1) { 
+    approx(depth, value, xout = depth)$y
+  } else{
+    value
+  })
+
+
+
+
+
+
+
+
+
+  
+#check out these missing row later on!!
+full_sequence <- seq(from = as.POSIXct("2022-04-02 00:00:00"), 
+                     to = as.POSIXct("2023-02-28 23:00:00"), 
+                     by = "30 mins")     
+
+missing_datetimes <- as.POSIXct(setdiff(full_sequence, tensio_2$TIMESTAMP))
+
 
 
