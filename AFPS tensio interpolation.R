@@ -156,7 +156,22 @@ tensio_long <- tibble(date = seq(as.POSIXct("2022-04-02 00:00:00"),
 #First i say which depths to interpolate (= every 1 cm) then i say do each depth at every date
 Depths_to_interpolate <- sort(unique(c(c(20, 40, 60), seq(ceiling(20), floor(60), 1))))
 Depths_to_interpolate <- crossing(date = unique(tensio_long$date), depth = Depths_to_interpolate)
-  
+
+#linear interpolation  
+{#tensio_interp <- tensio_long %>% 
+  #gather(depth, value, -date) %>% 
+  #mutate(depth = as.numeric(gsub("\\D", "", depth))) %>% 
+  #full_join(Depths_to_interpolate) %>% 
+  #arrange(date, depth) %>% 
+  #group_by(date) %>% 
+  #mutate(value.interp = if(length(na.omit(value)) > 1) { 
+    #approx(depth, value, xout = depth)$y
+  #} else{
+    #value
+  #})
+}
+
+#non linear interpolation
 tensio_interp <- tensio_long %>% 
   gather(depth, value, -date) %>% 
   mutate(depth = as.numeric(gsub("\\D", "", depth))) %>% 
@@ -164,14 +179,10 @@ tensio_interp <- tensio_long %>%
   arrange(date, depth) %>% 
   group_by(date) %>% 
   mutate(value.interp = if(length(na.omit(value)) > 1) { 
-    approx(depth, value, xout = depth)$y
+    spline(depth, value, xout = depth)$y
   } else{
     value
   })
-
-
-
-
 
 
 
