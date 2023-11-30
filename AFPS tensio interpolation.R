@@ -141,19 +141,31 @@ predicted_tensio <- data.frame(
 tensio_2 <- tensio %>% 
   select(TIMESTAMP, MS_TMAP_4_D_020, MS_TMAP_5_D_040, MS_TMAP_6_D_060)
 
+tensio_3 <- tensio %>% 
+  select(TIMESTAMP, MS_TMAP_7_D_020, MS_TMAP_8_D_040, MS_TMAP_9_D_060)
+
 #replace 1 NA with previous value to prevent error
 tensio_2$MS_TMAP_4_D_020 <- ifelse(is.na(tensio_2$MS_TMAP_4_D_020), lag(tensio_2$MS_TMAP_4_D_020), tensio_2$MS_TMAP_4_D_020)
 tensio_2$MS_TMAP_5_D_040 <- ifelse(is.na(tensio_2$MS_TMAP_5_D_040), lag(tensio_2$MS_TMAP_5_D_040), tensio_2$MS_TMAP_5_D_040)
 tensio_2$MS_TMAP_6_D_060 <- ifelse(is.na(tensio_2$MS_TMAP_6_D_060), lag(tensio_2$MS_TMAP_6_D_060), tensio_2$MS_TMAP_6_D_060)
 
-tensio_long <- tibble(date = as.POSIXct(tensio_2$TIMESTAMP),
+tensio_3$MS_TMAP_7_D_020 <- ifelse(is.na(tensio_3$MS_TMAP_7_D_020), lag(tensio_3$MS_TMAP_7_D_020), tensio_3$MS_TMAP_7_D_020)
+tensio_3$MS_TMAP_8_D_040 <- ifelse(is.na(tensio_3$MS_TMAP_8_D_040), lag(tensio_3$MS_TMAP_8_D_040), tensio_3$MS_TMAP_8_D_040)
+tensio_3$MS_TMAP_9_D_060 <- ifelse(is.na(tensio_3$MS_TMAP_9_D_060), lag(tensio_3$MS_TMAP_9_D_060), tensio_3$MS_TMAP_9_D_060)
+
+tensio_long2 <- tibble(date = as.POSIXct(tensio_2$TIMESTAMP),
                       Depth_20 = tensio_2$MS_TMAP_4_D_020,
                       Depth_40 = tensio_2$MS_TMAP_5_D_040,
                       Depth6_0 = tensio_2$MS_TMAP_6_D_060)
 
+tensio_long3 <- tibble(date = as.POSIXct(tensio_3$TIMESTAMP),
+                       Depth_20 = tensio_3$MS_TMAP_7_D_020,
+                       Depth_40 = tensio_3$MS_TMAP_8_D_040,
+                       Depth6_0 = tensio_3$MS_TMAP_9_D_060)
+
 #First i say which depths to interpolate (= every 1 cm) then i say do each depth at every date
 Depths_to_interpolate <- sort(unique(c(c(20, 40, 60), seq(ceiling(20), floor(60), 1))))
-Depths_to_interpolate <- crossing(date = unique(tensio_long$date), depth = Depths_to_interpolate)
+Depths_to_interpolate <- crossing(date = unique(tensio_long2$date), depth = Depths_to_interpolate)
 
 #linear interpolation  
 {#tensio_interp <- tensio_long %>% 
@@ -170,7 +182,7 @@ Depths_to_interpolate <- crossing(date = unique(tensio_long$date), depth = Depth
 }
 
 #non linear interpolation
-tensio_interp <- tensio_long %>% 
+tensio_interp2 <- tensio_long2 %>% 
   gather(depth, value, -date) %>% 
   mutate(depth = as.numeric(gsub("\\D", "", depth))) %>% 
   full_join(Depths_to_interpolate) %>% 
@@ -182,3 +194,15 @@ tensio_interp <- tensio_long %>%
     value
   })
 
+#non linear interpolation
+tensio_interp3 <- tensio_long3 %>% 
+  gather(depth, value, -date) %>% 
+  mutate(depth = as.numeric(gsub("\\D", "", depth))) %>% 
+  full_join(Depths_to_interpolate) %>% 
+  arrange(date, depth) %>% 
+  group_by(date) %>% 
+  mutate(value.interp = if(length(na.omit(value)) > 1) { 
+    spline(depth, value, xout = depth)$y
+  } else{
+    value
+  })
