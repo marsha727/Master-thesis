@@ -146,9 +146,7 @@ tensio_2$MS_TMAP_4_D_020 <- ifelse(is.na(tensio_2$MS_TMAP_4_D_020), lag(tensio_2
 tensio_2$MS_TMAP_5_D_040 <- ifelse(is.na(tensio_2$MS_TMAP_5_D_040), lag(tensio_2$MS_TMAP_5_D_040), tensio_2$MS_TMAP_5_D_040)
 tensio_2$MS_TMAP_6_D_060 <- ifelse(is.na(tensio_2$MS_TMAP_6_D_060), lag(tensio_2$MS_TMAP_6_D_060), tensio_2$MS_TMAP_6_D_060)
 
-tensio_long <- tibble(date = seq(as.POSIXct("2022-04-02 00:00:00"),
-                                 as.POSIXct("2023-02-28 22:00:00"),
-                                 by = "30 mins"),
+tensio_long <- tibble(date = as.POSIXct(tensio_2$TIMESTAMP),
                       Depth_20 = tensio_2$MS_TMAP_4_D_020,
                       Depth_40 = tensio_2$MS_TMAP_5_D_040,
                       Depth6_0 = tensio_2$MS_TMAP_6_D_060)
@@ -183,18 +181,4 @@ tensio_interp <- tensio_long %>%
   } else{
     value
   })
-
-
-
-
-
-  
-#check out these missing row later on!!
-full_sequence <- seq(from = as.POSIXct("2022-04-02 00:00:00"), 
-                     to = as.POSIXct("2023-02-28 23:00:00"), 
-                     by = "30 mins")     
-
-missing_datetimes <- as.POSIXct(setdiff(full_sequence, tensio_2$TIMESTAMP))
-
-
 
