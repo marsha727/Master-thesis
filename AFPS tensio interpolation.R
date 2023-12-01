@@ -316,6 +316,17 @@ Test_SWC <- SWC_TENSIO %>%
   group_by(depth_2) %>% 
   summarise(SWC2 = mean(SWC2), SWC3 = mean(SWC3))
 
+#Write to csv for analysis
 
+#clean some collumns out
+AFPS_mm_tensio <- AFPS_mm_tensio %>% 
+  select(date_2, depth_2, SMP_2, SMP_3, SWC2, SWC3, AFPS2, AFPS3, AFPS2_mm, AFPS3_mm) %>% 
+  rename(datetime = date_2, depth = depth_2)
 
+#assure correct format of datetime
+AFPS_mm_tensio$datetime <- format(AFPS_mm_tensio$datetime, format = "%Y-%m-%d %H:%M:%S")
+
+write.csv2(AFPS_mm_tensio, file = "Transformed/Langeweide_tensio_interpolated.csv", row.names = FALSE)
+
+testread <- read.csv2("Transformed/Langeweide_tensio_interpolated.csv")
 
