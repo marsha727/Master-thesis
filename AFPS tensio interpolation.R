@@ -155,6 +155,7 @@ tensio_3$MS_TMAP_7_D_020 <- ifelse(is.na(tensio_3$MS_TMAP_7_D_020), lag(tensio_3
 tensio_3$MS_TMAP_8_D_040 <- ifelse(is.na(tensio_3$MS_TMAP_8_D_040), lag(tensio_3$MS_TMAP_8_D_040), tensio_3$MS_TMAP_8_D_040)
 tensio_3$MS_TMAP_9_D_060 <- ifelse(is.na(tensio_3$MS_TMAP_9_D_060), lag(tensio_3$MS_TMAP_9_D_060), tensio_3$MS_TMAP_9_D_060)
 
+#Make a long tibble so that the depths and the known SMP are in a seperate column
 tensio_long2 <- tibble(date = as.POSIXct(tensio_2$TIMESTAMP),
                       Depth_20 = tensio_2$MS_TMAP_4_D_020,
                       Depth_40 = tensio_2$MS_TMAP_5_D_040,
@@ -292,22 +293,28 @@ AFPS_tensio <- SWC_TENSIO %>%
 AFPS_mm_tensio <- AFPS_tensio %>% 
   mutate(
     AFPS2_mm = case_when(
-      between(depth_2, 15, 35) ~ AFPS2 * WCS1 * 1,
-      between(depth_2, 36, 55) ~ AFPS2 * WCS2 * 1,
-      between(depth_2, 56, 65) ~ AFPS2 * WCS3 * 1,
+      between(depth_2, 15, 35) ~ AFPS2 * WCS1 * 10,
+      between(depth_2, 36, 55) ~ AFPS2 * WCS2 * 10,
+      between(depth_2, 56, 65) ~ AFPS2 * WCS3 * 10,
       TRUE ~ NA_real_
     ),
     AFPS3_mm = case_when(
-      between(depth_3, 15, 35) ~ AFPS3 * WCS1 * 1,
-      between(depth_3, 36, 55) ~ AFPS3 * WCS2 * 1,
-      between(depth_3, 56, 65) ~ AFPS3 * WCS3 * 1,
+      between(depth_3, 15, 35) ~ AFPS3 * WCS1 * 10,
+      between(depth_3, 36, 55) ~ AFPS3 * WCS2 * 10,
+      between(depth_3, 56, 65) ~ AFPS3 * WCS3 * 10,
       TRUE ~ NA_real_   
     )
   )
 
+#This way just a test
+Integrated_AFPS <- AFPS_mm_tensio %>% 
+  group_by(date_2) %>% 
+  summarise(AFPS_int2 = sum(AFPS2_mm), AFPS_int3 = sum(AFPS3_mm))
 
-
-
+#SWC jumps due to bodem fysische metingen
+Test_SWC <- SWC_TENSIO %>% 
+  group_by(depth_2) %>% 
+  summarise(SWC2 = mean(SWC2), SWC3 = mean(SWC3))
 
 
 
