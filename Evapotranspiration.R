@@ -158,7 +158,7 @@ ggplot(ET_d) +
     y = "ET (mm/d)"
   ) +
   scale_color_manual(
-    values = c("ET" = "darkblue"),
+    values = c("ET" = "tomato"),
     name = "Legend"
   ) +
   theme(
