@@ -1,72 +1,65 @@
 library(tidyverse)
 
 AFPS_SENTEK <- read.csv2("Transformed/Langeweide_Sentek_AFPS.csv")
-AFPS_TENSIO <- read.csv2("Transformed/Langeweide_Tensio_AFPS_mm_200.csv")
+AFPS_TENSIO <- read.csv2("Transformed/Langeweide_tensio_interpolated.csv")
 OWASIS_BBB <- read.csv2("Transformed/Langeweide_OWASIS_BBB.csv")
 Langeweide_data <- readRDS("Datasets/LAW_MS_ICOS.RDS")
 
 AFPS_SENTEK$datetime <- as.POSIXct(AFPS_SENTEK$datetime, format = "%Y-%m-%d %H:%M:%S")
-AFPS_TENSIO$TIMESTAMP <- as.POSIXct(AFPS_TENSIO$TIMESTAMP, format = "%Y-%m-%d %H:%M:%S")
+AFPS_TENSIO$TIMESTAMP <- as.POSIXct(AFPS_TENSIO$datetime, format = "%Y-%m-%d %H:%M:%S")
 OWASIS_BBB$Date <- as.POSIXct(OWASIS_BBB$Date, format = "%Y-%m-%d")
 Langeweide_data$datetime <- as.POSIXct(Langeweide_data$datetime, format = "%Y-%m-%d %H:%M:%S")
 
 #Fist check max depth of OWASIS_BBB in cm
 Max_GW_OWASIS <- abs(min(OWASIS_BBB$MedianGW_mmv)*100)
 
-#Dealing with missing values
-cor <- cor(AFPS_TENSIO$MS_TMAP_4_D_020, AFPS_TENSIO$MS_TMAP_7_D_020, method = "pearson", use = "complete.obs")
-cor2 <- cor(AFPS_TENSIO$MS_TMAP_5_D_040, AFPS_TENSIO$MS_TMAP_8_D_040, method = "pearson", use = "complete.obs")
-
-missing_values_indices <- which(is.na(AFPS_TENSIO$MS_TMAP_4_D_020))
-missing_values_indices2 <- which(is.na(AFPS_TENSIO$MS_TMAP_8_D_040))
-
-# Automatically find the start and end indices of the gap
-start_index <- min(missing_values_indices)
-end_index <- max(missing_values_indices)
-
-start_index2 <- min(missing_values_indices2)
-end_index2 <- max(missing_values_indices2)
-
-# Use the correlation to estimate missing values of MS_TMAP_4_D_020 based on MS_TMAP_7_D_020
-AFPS_TENSIO$MS_TMAP_4_D_020[start_index:end_index] <-
-  AFPS_TENSIO$MS_TMAP_7_D_020[start_index:end_index] * cor
-
-AFPS_TENSIO$MS_TMAP_8_D_040[start_index2:end_index2] <-
-  AFPS_TENSIO$MS_TMAP_5_D_040[start_index2:end_index2] * cor2
-
-#Integrate SENTEK
+#Integrate SENTEK + tensio over 60 cm ~ not perfect allignment
 AFPS_int_SENTEK <- AFPS_SENTEK %>% 
-  mutate(Probe1 = SWC_1_015 + SWC_1_025 + SWC_1_035 + SWC_1_045 + SWC_1_055 + SWC_1_065 + SWC_1_075) %>% 
-  mutate(Probe3= SWC_3_015 + SWC_3_025 + SWC_3_035 + SWC_3_045 + SWC_3_055 + SWC_1_065 + SWC_1_075)
+  mutate(Probe1 = SWC_1_025 + SWC_1_035 + SWC_1_045 + SWC_1_055 + SWC_1_065) %>% 
+  mutate(Probe3= SWC_3_025 + SWC_3_035 + SWC_3_045 + SWC_3_055 + SWC_1_065)
 
 AFPS_int_TENSIO <- AFPS_TENSIO %>% 
-  mutate(Probe456 = MS_TMAP_4_D_020 + MS_TMAP_5_D_040 + MS_TMAP_6_D_060) %>% 
-  mutate(Probe789 = MS_TMAP_7_D_020 + MS_TMAP_8_D_040 + MS_TMAP_9_D_060)
+  group_by(datetime) %>% 
+  summarise(AFPS_int2 = sum(AFPS2_mm), AFPS_int3 = sum(AFPS3_mm))
+
+#Second selection for OWASIS
+AFPS_int_SENTEK_O <- AFPS_SENTEK %>% 
+  mutate(Probe1 = SWC_1_005 + SWC_1_015 + SWC_1_025) %>% 
+  mutate(Probe3 = SWC_3_005 + SWC_3_015 + SWC_3_025)
+
 
 #Period of analysis
-start_date <- "2022-04-21"
-end_date <- "2022-11-01"
+start_date <- "2022-04-02"
+end_date1 <- "2022-11-02"
+end_date2 <- "2022-11-01" #do it ask me why but the other cut doesnt work for tensio
+end_date3 <- "2022-10-31"
 
 #filter for the dates
 AFPS_int_SENTEK <- AFPS_int_SENTEK %>% 
-  filter(datetime >= start_date & datetime <= end_date)
+  filter(datetime >= start_date & datetime <= end_date3)
 
 AFPS_int_TENSIO <- AFPS_int_TENSIO %>% 
-  filter(TIMESTAMP >= start_date & TIMESTAMP <= end_date)
+  filter(datetime >= start_date & datetime <= end_date2)
+
+AFPS_int_SENTEK_O <- AFPS_int_SENTEK_O %>% 
+  filter(datetime >= start_date & datetime <= end_date3)
 
 AFPS_SENTEK <- AFPS_SENTEK %>% 
   filter(datetime >= start_date & datetime <= end_date)
 
 AFPS_TENSIO <- AFPS_TENSIO %>% 
-  filter(TIMESTAMP >= start_date & TIMESTAMP <= end_date)
+  filter(datetime >= start_date & datetime <= end_date2)
 
 Langeweide_data <- Langeweide_data %>% 
   filter(day >= start_date & day <= end_date)
 
-#Extract GWL
+OWASIS_BBB <- OWASIS_BBB %>% 
+  filter(Date >= start_date & Date <= end_date3)
+
+#GWL side project
+{#Extract GWL
 GWL <- Langeweide_data %>% 
   select(datetime, WL_1, WL_2, WL_3, WL_4, WL_5, WL, WL_cor)
-
 
 #need to do an estimation on the conversion to NAP
 columns_to_mean <- c("WL_1", "WL_2", "WL_3", "WL_4", "WL_5")
@@ -79,67 +72,86 @@ GWL_mmv <- GWL %>%
 
 GWL_mmv <- GWL_mmv %>% 
   mutate(WL_mean = rowMeans(GWL_mmv[ , columns_to_mean], na.rm = TRUE))
+}
 
 #need to aggregate by day for OWASIS
 AFPS_int_SENTEK <- AFPS_int_SENTEK %>% 
   group_by(datetime = format(datetime, "%Y-%m-%d")) %>% 
-  summarise(across(everything(), mean, na.rm = TRUE))
+  summarise(across(everything(), ~mean(., na.rm = TRUE)))
 
 #need to aggregate by day for OWASIS
-AFPS_int_TENSIO <- AFPS_int_TENSIO %>% 
-  group_by(datetime = format(TIMESTAMP, "%Y-%m-%d")) %>% 
-  summarise(across(everything(), mean, na.rm = TRUE))
+AFPS_int_TENSIO<- AFPS_int_TENSIO %>% 
+  group_by(datetime = as.Date(datetime)) %>% 
+  summarise(across(everything(), ~mean(., na.rm = TRUE)))
 
-AFPS_TENSIO$TIMESTAMP <- as.POSIXct(AFPS_TENSIO$TIMESTAMP, format = "%Y-%m-%d")
+
+#Second aggregation for OWASIS
+AFPS_int_SENTEK_O <- AFPS_int_SENTEK_O %>% 
+  group_by(datetime = format(datetime, "%Y-%m-%d")) %>% 
+  summarise(across(everything(), ~mean(., na.rm = TRUE)))  
+
+AFPS_TENSIO$datetime <- as.POSIXct(AFPS_TENSIO$datetime, format = "%Y-%m-%d")
 AFPS_int_SENTEK$datetime <- as.POSIXct(AFPS_int_SENTEK$datetime, format = "%Y-%m-%d")
-AFPS_int_TENSIO$TIMESTAMP <- as.POSIXct(AFPS_int_TENSIO$TIMESTAMP, format = "%Y-%m-%d")
+AFPS_int_SO$datetime <- as.POSIXct(AFPS_int_SO$datetime, format = "%Y-%m-%d") 
+AFPS_int_TS$datetime <- as.POSIXct(AFPS_int_TS$datetime, format = "%Y-%m-%d")
+AFPS_int_TENSIO$datetime <- as.POSIXct(AFPS_int_TENSIO$datetime, format = "%Y-%m-%d")
 OWASIS_BBB$Date <- as.POSIXct(OWASIS_BBB$Date, format = "%Y-%m-%d")
 
-ggplot(AFPS_int_SENTEK) +
-  geom_line(aes(x = datetime, y = Probe1))
-
-ggplot(AFPS_int_TENSIO) +
-  geom_line(aes(x = TIMESTAMP, y = Probe789))
-
-ggplot(OWASIS_BBB) +
-  geom_line(aes(x = Date, y = MedianBBB))
-
-ggplot(AFPS_TENSIO) +
-  geom_point(aes(x = TIMESTAMP, y = MS_TMAP_2_D_030))
 
 
+#Combined AFPS TENSIO AND SENTEK
+AFPS_int_TS <- bind_cols(AFPS_int_SENTEK[1], AFPS_int_SENTEK[ ,27:28], AFPS_int_TENSIO[ ,2:3], OWASIS_BBB[4])
+
+AFPS_int_SO <- bind_cols(AFPS_int_SENTEK_O[1], AFPS_int_SENTEK_O[ ,27:28], OWASIS_BBB[4])
 
 
+#PLOTTING
 
-Depth20 <- cbind(Depth20_14, Depth20_17)
-
-ggplot(AFPS_TENSIO) +
-  geom_line(aes(x = TIMESTAMP, y = MS_TMAP_5_D_040, color = "4"), size = 0.5) +
-  geom_line(aes(x = TIMESTAMP, y = MS_TMAP_8_D_040, color = "7"), size = 0.5) +
+#TENSIO AND SENTEK WITH VOLUME = 60 CM
+ggplot(AFPS_int_TS) +
+  geom_line(aes(x = datetime, y = Probe1, color = "SENTEK1"), linewidth = 0.3) +
+  geom_line(aes(x = datetime, y = AFPS_int2, color = "TENSIO2"), linewidth = 0.3) +
+  geom_line(aes(x = datetime, y = MedianBBB, color = "OWASIS"), linewidth = 0.3) +
+  labs(
+    title = "AFPS int (SENTEK  VS TENSIO VS OWASIS) depth: 20-60 and unknown OWASIS",
+    x = "Date",
+    y = "AFPS int (mm)"
+  ) +
   scale_color_manual(
-    values = c("1" = "tomato", "4" = "skyblue", "7" = "orange"),
-    name = "Measurement device"
+    values = c("SENTEK1" = 'red', "SENTEK3" = "tomato", "TENSIO2" = "blue", "TENSIO3" = "skyblue", "OWASIS" = "darkgreen"),
+    name = "Device"
   ) +
   theme(
-    legend.title = element_text(size = 8),
-    legend.text = element_text(size = 7),
+    legend.title = element_text(size = 10),
+    legend.text = element_text(size = 9),
     legend.key.width = unit(0.5, "cm")
   )
 
-ggplot(AFPS_int_TENSIO) +
-  geom_point(aes(x = TIMESTAMP, y = Probe456, color = "Probe456")) +
-  geom_point(aes(x = TIMESTAMP, y = Probe789, color = "Probe789")) +
+#SENTEK and OWASIS with volume = ~20
+ggplot(AFPS_int_SO) +
+  geom_line(aes(x = datetime, y = Probe1, color = "SENTEK1"), linewidth = 0.3) +
+  geom_line(aes(x = datetime, y = Probe3, color = "SENTEK3"), linewidth = 0.3) +
+  geom_line(aes(x = datetime, y = MedianBBB, color = "OWASIS"), linewidth = 0.3) +
+  labs(
+    title = "AFPS int (SENTEK VS OWASIS) depth = ~0-25",
+    x = "Date",
+    y = "AFPS int (mm)"
+  ) +
   scale_color_manual(
-    values = c("Probe456" = "tomato", "Probe789" = "skyblue"),
-    name = "Probes"
+    values = c("SENTEK1" = 'red', "SENTEK3" = "tomato", "OWASIS" = "blue"),
+    name = "Device"
   ) +
   theme(
-    legend.title = element_text(size = 8),
-    legend.text = element_text(size = 7),
+    legend.title = element_text(size = 10),
+    legend.text = element_text(size = 9),
     legend.key.width = unit(0.5, "cm")
   )
 
-#just some experiments for quality check
+
+
+
+
+#This was to check the GWL with TENSIO values
 AFPS <- bind_cols(AFPS_SENTEK[1], AFPS_SENTEK[ , 3:26], AFPS_TENSIO[, 2:10], GWL_mmv[, 8:9] )
 
 AFPS$datetime <- as.POSIXct(AFPS$datetime, format = "%Y-%m-%d %H:%M:%S")
