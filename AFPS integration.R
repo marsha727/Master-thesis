@@ -44,7 +44,7 @@ AFPS_int_TENSIO <- AFPS_TENSIO %>%
   mutate(Probe789 = MS_TMAP_7_D_020 + MS_TMAP_8_D_040 + MS_TMAP_9_D_060)
 
 #Period of analysis
-start_date <- "2022-04-02"
+start_date <- "2022-04-21"
 end_date <- "2022-11-01"
 
 #filter for the dates
