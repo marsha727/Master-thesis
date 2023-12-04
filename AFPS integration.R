@@ -45,13 +45,13 @@ AFPS_int_SENTEK_O <- AFPS_int_SENTEK_O %>%
   filter(datetime >= start_date & datetime <= end_date3)
 
 AFPS_SENTEK <- AFPS_SENTEK %>% 
-  filter(datetime >= start_date & datetime <= end_date)
+  filter(datetime >= start_date & datetime <= end_date3)
 
 AFPS_TENSIO <- AFPS_TENSIO %>% 
   filter(datetime >= start_date & datetime <= end_date2)
 
 Langeweide_data <- Langeweide_data %>% 
-  filter(day >= start_date & day <= end_date)
+  filter(day >= start_date & day <= end_date3)
 
 OWASIS_BBB <- OWASIS_BBB %>% 
   filter(Date >= start_date & Date <= end_date3)
@@ -104,6 +104,9 @@ AFPS_int_TS <- bind_cols(AFPS_int_SENTEK[1], AFPS_int_SENTEK[ ,27:28], AFPS_int_
 
 AFPS_int_SO <- bind_cols(AFPS_int_SENTEK_O[1], AFPS_int_SENTEK_O[ ,27:28], OWASIS_BBB[4])
 
+AFPS_int_TS_30min <- bind_cols(AFPS_int_SENTEK[1], AFPS_int_SENTEK[ ,27:28], AFPS_int_TENSIO[ ,2:3])
+
+write_rds(AFPS_int_TS, file = "App/AFPS_int_TS.rds")
 
 #PLOTTING
 
