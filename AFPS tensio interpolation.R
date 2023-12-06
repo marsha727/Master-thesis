@@ -37,106 +37,6 @@ tensio$MS_TMAP_4_D_020[start_index:end_index] <-
 tensio$MS_TMAP_8_D_040[start_index2:end_index2] <-
   tensio$MS_TMAP_5_D_040[start_index2:end_index2] * per2
 
-#Interpolation of tensiometer
-{Depths_to_interpolate <- seq(20, 60, by = 1)
-
-model_data <- AFPS_TENSIO %>% 
-  select(TIMESTAMP, MS_TMAP_4_D_020, MS_TMAP_5_D_040, MS_TMAP_6_D_060) %>% 
-  rename(Depth_20 = MS_TMAP_4_D_020, Depth_40 = MS_TMAP_5_D_040, Depth_60 = MS_TMAP_6_D_060)
-
-model_data_long <- model_data %>% 
-  gather(key = "Depths", value = "Value", -TIMESTAMP) %>%
-  mutate(Depth = as.numeric(gsub("Depth_", "", Depths)),
-         InteractionTerm = interaction(Depth, TIMESTAMP))
-
-model <- lm(Value ~ InteractionTerm, data = model_data_long)
-
-interp_data <- expand.grid(Depth = Depths_to_interpolate, Time = unique(model_data$TIMESTAMP))
-interp_data$InteractionTerm <- interaction(interp_data$Depth, interp_data$Time)
-
-interp_data$Value <- predict(model, newdata = interp_data)
-} 
-
-{#new options
-tensio_2 <- tensio %>% 
-  select(TIMESTAMP, MS_TMAP_4_D_020, MS_TMAP_5_D_040, MS_TMAP_6_D_060) %>% 
-  rename(Depth_20 = MS_TMAP_4_D_020, Depth_40 = MS_TMAP_5_D_040, Depth_60 = MS_TMAP_6_D_060)
-
-#create a new tensio file that sorts all SMP values in one column and a depth
-tensio_long <- tensio_2 %>% 
-  pivot_longer(cols = -TIMESTAMP,
-               names_to = "Column",
-               values_to = "SoilMatrixPotential") %>% 
-  mutate(Depth = str_extract(Column, "\\d+$")) %>% 
-  select(-Column)
-
-tensio_long$Depth <- as.numeric(tensio_long$Depth)
-tensio_long$TIMESTAMP <- as.POSIXct(tensio_long$TIMESTAMP)
-
-#linear model for soil matrix potential and depth
-lm_depth_MP <- lm(SoilMatrixPotential ~ TIMESTAMP + Depth, data = tensio_long )
-
-Depths_to_interpolate <- seq(20, 60, by = 1)
-Times_to_interpolate <- unique(tensio_long$TIMESTAMP)
-
-new_data <- data.frame(Depth = rep(Depths_to_interpolate, each = length(Times_to_interpolate)))
-
-new_data$TIMESTAMP <- rep(seq(min(tensio_long$TIMESTAMP), max(tensio_long$TIMESTAMP),
-                              length.out = length(unique(tensio_long$TIMESTAMP))),
-                              times = length(Depths_to_interpolate))
-
-#new_data <- expand.grid(Depth = Depths_to_interpolate, TIMESTAMP = Times_to_interpolate)
-
-predict_values <- predict(lm_depth_MP, newdata = new_data)
-
-predicted_tensio <- data.frame(
-  Depth = rep(Depths_to_interpolate, each = length(unique(tensio_long$TIMESTAMP))),
-  TIMESTAMP = rep(unique(tensio_long$TIMESTAMP), times = length(Depths_to_interpolate)),
-  SoilMatrixPotential = predict_values
-)
-}
-
-{#new options
-tensio_2 <- tensio %>% 
-  select(TIMESTAMP, MS_TMAP_4_D_020, MS_TMAP_5_D_040, MS_TMAP_6_D_060) %>% 
-  rename(Depth_20 = MS_TMAP_4_D_020, Depth_40 = MS_TMAP_5_D_040, Depth_60 = MS_TMAP_6_D_060)
-
-#create a new tensio file that sorts all SMP values in one column and a depth
-tensio_long <- tensio_2 %>% 
-  pivot_longer(cols = -TIMESTAMP,
-               names_to = "Column",
-               values_to = "SoilMatrixPotential") %>% 
-  mutate(Depth = str_extract(Column, "\\d+$")) %>% 
-  select(-Column)
-
-tensio_long$SoilMatrixPotential <- ave(tensio_long$SoilMatrixPotential, tensio_long$Depth, FUN = function(x) cumsum(!is.na(x)))
-
-# Function to fit linear model for each time step
-fit_lm_by_time <- function(data) {
-  lm(SoilMatrixPotential ~ Depth, data = data)
-}
-
-# Fit separate linear models for each time step
-lm_models <- tensio_long %>%
-  group_split(TIMESTAMP) %>%
-  map(fit_lm_by_time)
-
-# Create a data frame for prediction with all combinations of Depth and TIMESTAMP
-Depths_to_interpolate <- as.numeric(seq(20, 60, by = 2))
-Times_to_interpolate <- unique(tensio_long$TIMESTAMP)
-new_data <- expand.grid(Depth = Depths_to_interpolate, TIMESTAMP = Times_to_interpolate)
-
-# Predict values using the fitted linear models
-predict_values <- map(lm_models, ~ predict(.x, newdata = new_data))
-
-# Combine the predicted values into a data frame
-predicted_tensio <- data.frame(
-  Depth = rep(Depths_to_interpolate, each = length(Times_to_interpolate)),
-  TIMESTAMP = rep(Times_to_interpolate, times = length(Depths_to_interpolate)),
-  SoilMatrixPotential = predict_values
-)
-}
-
 #Interpolation method
 
 #make subselection for tensio point 2 and 3
@@ -173,21 +73,8 @@ Depths_to_interpolate2 <- crossing(date = unique(tensio_long2$date), depth = Dep
 Depths_to_interpolate3 <- sort(unique(c(c(20, 40, 60), seq(ceiling(20), floor(60), 1))))
 Depths_to_interpolate3 <- crossing(date = unique(tensio_long3$date), depth = Depths_to_interpolate3)
 
-#linear interpolation  
-{#tensio_interp <- tensio_long %>% 
-  #gather(depth, value, -date) %>% 
-  #mutate(depth = as.numeric(gsub("\\D", "", depth))) %>% 
-  #full_join(Depths_to_interpolate) %>% 
-  #arrange(date, depth) %>% 
-  #group_by(date) %>% 
-  #mutate(value.interp = if(length(na.omit(value)) > 1) { 
-    #approx(depth, value, xout = depth)$y
-  #} else{
-    #value
-  #})
-}
 
-#non linear interpolation
+#linear interpolation
 tensio_interp2 <- tensio_long2 %>% 
   gather(depth, value, -date) %>% 
   mutate(depth = as.numeric(gsub("\\D", "", depth))) %>% 
@@ -200,7 +87,7 @@ tensio_interp2 <- tensio_long2 %>%
     value
   })
 
-#non linear interpolation
+#linear interpolation
 tensio_interp3 <- tensio_long3 %>% 
   gather(depth, value, -date) %>% 
   mutate(depth = as.numeric(gsub("\\D", "", depth))) %>% 
@@ -212,6 +99,27 @@ tensio_interp3 <- tensio_long3 %>%
   } else{
     value
   })
+
+
+#linear interpolation
+tensio_interp3 <- tensio_subset %>% 
+  gather(depth, value, -date) %>% 
+  mutate(depth = as.numeric(gsub("\\D", "", depth))) %>% 
+  full_join(Depths_to_interpolate3_subset) %>% 
+  arrange(date, depth) %>% 
+  group_by(date) %>% 
+  mutate(value.interp = if (length(na.omit(value)) > 1) { 
+    fit1 <- loess(value ~ depth, data = ., span = 1.40, degree = 1)
+    new_data <- data.frame(depth = seq(20, 60, by = 1))
+    predict(fit1, newdata = data.frame(depth = new_data$depth))
+  } else {
+    value
+  })
+plot(tensio_interp3$value.interp)
+
+
+# Print or visualize the resulting data frame
+print(tensio_interp3)
 
 
 #filter for combination of datasets
