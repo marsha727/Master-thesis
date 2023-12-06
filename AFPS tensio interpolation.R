@@ -100,23 +100,46 @@ tensio_interp3 <- tensio_long3 %>%
     value
   })
 
+tensio_subset <- tensio_long3 %>% filter(date <= as.POSIXct("2022-02-05 12:00:00"))
+Depths_to_interpolate3_subset <- Depths_to_interpolate3 %>% filter(date <= as.POSIXct("2022-02-04 12:00:00"))
 
-#linear interpolation
-tensio_interp3 <- tensio_subset %>% 
+
+tensio_interp3 <- tensio_long3 %>% 
   gather(depth, value, -date) %>% 
   mutate(depth = as.numeric(gsub("\\D", "", depth))) %>% 
-  full_join(Depths_to_interpolate3_subset) %>% 
+  full_join(Depths_to_interpolate3) %>% 
   arrange(date, depth) %>% 
   group_by(date) %>% 
   mutate(value.interp = if (length(na.omit(value)) > 1) { 
-    fit1 <- loess(value ~ depth, data = ., span = 1.40, degree = 1)
-    new_data <- data.frame(depth = seq(20, 60, by = 1))
-    predict(fit1, newdata = data.frame(depth = new_data$depth))
+    # Non-linear interpolation using splinefun for each date group
+    spline_fit <- splinefun(depth, value, method = "monoH.FC")
+    interpolated_values <- spline_fit(seq(20, 60, by = 1))
+    # Clip the interpolated values to the range of the original depths
+    pmin(pmax(interpolated_values, min(value, na.rm = TRUE)), max(value, na.rm = TRUE))
   } else {
     value
   })
 plot(tensio_interp3$value.interp)
 
+
+{#linear interpolation
+  tensio_interp3 <- tensio_subset %>% 
+    gather(depth, value, -date) %>% 
+    mutate(depth = as.numeric(gsub("\\D", "", depth))) %>% 
+    full_join(Depths_to_interpolate3_subset) %>% 
+    arrange(date, depth) %>% 
+    group_by(date) %>% 
+    mutate(value.interp = if (length(na.omit(value)) > 1) { 
+      fit1 <- loess(value ~ depth, data = ., span = 1.5, degree = 1)
+      new_data <- data.frame(depth = seq(20, 60, by = 1))
+      predictions <- predict(fit1, newdata = data.frame(depth = new_data$depth))
+      # Clip the predicted values to the range of the original depths
+      pmin(pmax(predictions, min(value, na.rm = TRUE)), max(value, na.rm = TRUE))
+    } else {
+      value
+    })
+  plot(tensio_interp3$value.interp)
+}
 
 # Print or visualize the resulting data frame
 print(tensio_interp3)
