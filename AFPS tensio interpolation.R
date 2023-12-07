@@ -15,23 +15,27 @@ tensio <- tensio %>%
          MS_TMAP_7_D_020, MS_TMAP_8_D_040, MS_TMAP_9_D_060)
 
 #Dealing with missing values
+
+#check if the datasets have a high correlation so i can interpolate based on its dynamics
 cor <- cor(tensio$MS_TMAP_4_D_020, tensio$MS_TMAP_7_D_020, method = "pearson", use = "complete.obs")
 cor2 <- cor(tensio$MS_TMAP_5_D_040, tensio$MS_TMAP_8_D_040, method = "pearson", use = "complete.obs")
 
+#Cor was above 98, the second set will be drier due to distance from drain so use the average difference for calc
 per <- mean(tensio$MS_TMAP_4_D_020 / tensio$MS_TMAP_7_D_020, na.rm = TRUE)
 per2 <- mean(tensio$MS_TMAP_5_D_040 / tensio$MS_TMAP_8_D_040, na.rm = TRUE)
 
+#return rows with missing values
 missing_values_indices <- which(is.na(tensio$MS_TMAP_4_D_020))
 missing_values_indices2 <- which(is.na(tensio$MS_TMAP_8_D_040))
 
-# Automatically find the start and end indices of the gap
+#Find the start and end indices/rows of the gap
 start_index <- min(missing_values_indices)
 end_index <- max(missing_values_indices)
 
 start_index2 <- min(missing_values_indices2)
 end_index2 <- max(missing_values_indices2)
 
-# Use the correlation to estimate missing values of MS_TMAP_4_D_020 based on MS_TMAP_7_D_020
+# Use the percentage difference to estimate missing values of MS_TMAP_4_D_020 based on MS_TMAP_7_D_020
 tensio$MS_TMAP_4_D_020[start_index:end_index] <-
   tensio$MS_TMAP_7_D_020[start_index:end_index] * per
 
@@ -107,11 +111,12 @@ tensio_interp2 <- tensio_long2 %>%
   mutate(depth = as.numeric(gsub("\\D", "", depth))) %>% 
   full_join(Depths_to_interpolate2) %>% 
   arrange(date, depth) %>% 
-  group_by(date) %>% 
+  group_by(date) %>% #this first part is to create the table with column depth and value
   mutate(value.interp = if (length(na.omit(value)) > 1) { 
     # Non-linear interpolation using splinefun for each date group
-    spline_fit <- splinefun(depth, value, method = "monoH.FC")
-    interpolated_values <- spline_fit(seq(20, 60, by = 1))
+    spline_fit1 <- splinefun(depth, value, method = "monoH.FC")
+    interpolated_values <- spline_fit1(seq(20, 60, by = 1))
+    
     # Clip the interpolated values to the range of the original depths
     pmin(pmax(interpolated_values, min(value, na.rm = TRUE)), max(value, na.rm = TRUE))
   } else {
@@ -127,14 +132,13 @@ tensio_interp3 <- tensio_long3 %>%
   group_by(date) %>% 
   mutate(value.interp = if (length(na.omit(value)) > 1) { 
     # Non-linear interpolation using splinefun for each date group
-    spline_fit <- splinefun(depth, value, method = "monoH.FC")
-    interpolated_values <- spline_fit(seq(20, 60, by = 1))
+    spline_fit2 <- splinefun(depth, value, method = "monoH.FC")
+    interpolated_values <- spline_fit2(seq(20, 60, by = 1))
     # Clip the interpolated values to the range of the original depths
     pmin(pmax(interpolated_values, min(value, na.rm = TRUE)), max(value, na.rm = TRUE))
   } else {
     value
   })
-
 
 #filter for combination of datasets
 tensio_interp2 <- tensio_interp2 %>% 
