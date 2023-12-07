@@ -2,6 +2,7 @@
 
 library(tidyverse)
 library(readxl)
+library(splines)
 
 tensio <- read.csv("Datasets/LAW_TENS_2020-2023_clean.csv")
 Subset_Bodem_fysische_metingen <- read.csv2("MvG_Bodem_fysische_metingen.csv")
@@ -75,35 +76,49 @@ Depths_to_interpolate3 <- crossing(date = unique(tensio_long3$date), depth = Dep
 
 
 #linear interpolation
+#tensio_interp2 <- tensio_long2 %>% 
+  #gather(depth, value, -date) %>% 
+  #mutate(depth = as.numeric(gsub("\\D", "", depth))) %>% 
+  #full_join(Depths_to_interpolate2) %>% 
+  #arrange(date, depth) %>% 
+  #group_by(date) %>% 
+  #mutate(value.interp = if(length(na.omit(value)) > 1) { 
+    #approx(depth, value, xout = depth)$y
+  #} else{
+    #value
+  #})
+
+#linear interpolation
+#tensio_interp3 <- tensio_long3 %>% 
+  #gather(depth, value, -date) %>% 
+  #mutate(depth = as.numeric(gsub("\\D", "", depth))) %>% 
+  #full_join(Depths_to_interpolate3) %>% 
+  #arrange(date, depth) %>% 
+  #group_by(date) %>% 
+  #mutate(value.interp = if(length(na.omit(value)) > 1) { 
+    #approx(depth, value, xout = depth)$y
+  #} else{
+    #value
+  #})
+
+#non-linear interpolation with splinefun and monoH.FC
 tensio_interp2 <- tensio_long2 %>% 
   gather(depth, value, -date) %>% 
   mutate(depth = as.numeric(gsub("\\D", "", depth))) %>% 
   full_join(Depths_to_interpolate2) %>% 
   arrange(date, depth) %>% 
   group_by(date) %>% 
-  mutate(value.interp = if(length(na.omit(value)) > 1) { 
-    approx(depth, value, xout = depth)$y
-  } else{
+  mutate(value.interp = if (length(na.omit(value)) > 1) { 
+    # Non-linear interpolation using splinefun for each date group
+    spline_fit <- splinefun(depth, value, method = "monoH.FC")
+    interpolated_values <- spline_fit(seq(20, 60, by = 1))
+    # Clip the interpolated values to the range of the original depths
+    pmin(pmax(interpolated_values, min(value, na.rm = TRUE)), max(value, na.rm = TRUE))
+  } else {
     value
   })
 
-#linear interpolation
-tensio_interp3 <- tensio_long3 %>% 
-  gather(depth, value, -date) %>% 
-  mutate(depth = as.numeric(gsub("\\D", "", depth))) %>% 
-  full_join(Depths_to_interpolate3) %>% 
-  arrange(date, depth) %>% 
-  group_by(date) %>% 
-  mutate(value.interp = if(length(na.omit(value)) > 1) { 
-    approx(depth, value, xout = depth)$y
-  } else{
-    value
-  })
-
-tensio_subset <- tensio_long3 %>% filter(date <= as.POSIXct("2022-02-05 12:00:00"))
-Depths_to_interpolate3_subset <- Depths_to_interpolate3 %>% filter(date <= as.POSIXct("2022-02-04 12:00:00"))
-
-
+#non-linear interpolation with splinefun and monoH.FC (monotonicity of increase)
 tensio_interp3 <- tensio_long3 %>% 
   gather(depth, value, -date) %>% 
   mutate(depth = as.numeric(gsub("\\D", "", depth))) %>% 
@@ -119,30 +134,6 @@ tensio_interp3 <- tensio_long3 %>%
   } else {
     value
   })
-plot(tensio_interp3$value.interp)
-
-
-{#linear interpolation
-  tensio_interp3 <- tensio_subset %>% 
-    gather(depth, value, -date) %>% 
-    mutate(depth = as.numeric(gsub("\\D", "", depth))) %>% 
-    full_join(Depths_to_interpolate3_subset) %>% 
-    arrange(date, depth) %>% 
-    group_by(date) %>% 
-    mutate(value.interp = if (length(na.omit(value)) > 1) { 
-      fit1 <- loess(value ~ depth, data = ., span = 1.5, degree = 1)
-      new_data <- data.frame(depth = seq(20, 60, by = 1))
-      predictions <- predict(fit1, newdata = data.frame(depth = new_data$depth))
-      # Clip the predicted values to the range of the original depths
-      pmin(pmax(predictions, min(value, na.rm = TRUE)), max(value, na.rm = TRUE))
-    } else {
-      value
-    })
-  plot(tensio_interp3$value.interp)
-}
-
-# Print or visualize the resulting data frame
-print(tensio_interp3)
 
 
 #filter for combination of datasets
