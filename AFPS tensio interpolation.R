@@ -140,6 +140,7 @@ tensio_interp3 <- tensio_long3 %>%
     value
   })
 
+
 #filter for combination of datasets
 tensio_interp2 <- tensio_interp2 %>% 
   select(date, depth, value.interp) %>% 
@@ -238,19 +239,26 @@ Integrated_AFPS <- AFPS_mm_tensio %>%
   summarise(AFPS_int2 = sum(AFPS2_mm), AFPS_int3 = sum(AFPS3_mm))
 
 #SWC jumps due to bodem fysische metingen
-Test_SWC <- SWC_TENSIO %>% 
-  group_by(depth_2) %>% 
-  summarise(SWC2 = mean(SWC2), SWC3 = mean(SWC3))
+#Test_SWC <- SWC_TENSIO %>% 
+  #group_by(depth_2) %>% 
+  #summarise(SWC2 = mean(SWC2), SWC3 = mean(SWC3))
 
 #Write to csv for analysis
 
 #clean some collumns out
 AFPS_mm_tensio <- AFPS_mm_tensio %>% 
-  select(date_2, depth_2, SMP_2, SMP_3, SWC2, SWC3, AFPS2, AFPS3, AFPS2_mm, AFPS3_mm) %>% 
-  rename(datetime = date_2, depth = depth_2)
+  select(date_2, depth_2, AFPS2_mm, AFPS3_mm) %>% 
+  rename(datetime = date_2, depth = depth_2, AFPS2 = AFPS2_mm, AFPS3 = AFPS3_mm)
 
-#assure correct format of datetime
-AFPS_mm_tensio$datetime <- format(AFPS_mm_tensio$datetime, format = "%Y-%m-%d %H:%M:%S")
+Integrated_AFPS <- Integrated_AFPS %>% 
+  rename(AFPS2 = AFPS_int2, AFPS3 = AFPS_int3)
+
+
+#write in RDS for APP to maintain POSIXct
+write_rds(AFPS_mm_tensio, file = "App/Langeweide_tensio_interpolated.rds")
+write_rds(Integrated_AFPS, file = "App/Langeweide_tensio_integrated.rds")
+
+AFPS_mm_tensio$datetime <- format(AFPS_mm_tensio$datetime, "%Y-%m-%d %H:%M:%S")
 
 write.csv2(AFPS_mm_tensio, file = "Transformed/Langeweide_tensio_interpolated.csv", row.names = FALSE)
 
