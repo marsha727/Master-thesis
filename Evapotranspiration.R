@@ -6,9 +6,25 @@ Langeweide_data <- readRDS("Datasets/LAW_MS_ICOS.rds")
 ET <- Langeweide_data %>% 
   select(datetime, sunrise, sunset, Tair, ET, VPD, RH, bowen_ratio, Tdew_EP, RAIN, WIND, SWIN, Ustar, CO2_flag, NEE_CO2, LE_flag, SWIN_KNMI, SWOUT, LWIN, LWOUT)
 
-ET$sunset <- as.POSIXct(ET$sunset, format = "%Y-%m-%d %H:%M:%S")
-ET$sunrise <- as.POSIXct(ET$sunrise, format = "%Y-%m-%d %H:%M:%S")
+Rad <- Langeweide_data %>% 
+  select(datetime, sunrise, sunset, SWIN_KNMI, SWIN, SWOUT, LWIN, LWOUT, bowen_ratio)
 
+Rad$sunset <- as.POSIXct(Rad$sunset, format = "%Y-%m-%d %H:%M:%S")
+Rad$sunrise <- as.POSIXct(Rad$sunrise, format = "%Y-%m-%d %H:%M:%S")
+
+Rad$within_range <- Rad$datetime >= Rad$sunrise & Rad$datetime <= Rad$sunset
+
+Rad$SWIN <- ifelse(is.na(Rad$SWIN), 0, Rad$SWIN)
+Rad$SWOUT <- ifelse(is.na(Rad$SWOUT), 0, Rad$SWOUT)
+
+Rad1 <- Rad %>% 
+  mutate(Rn = SWIN - SWOUT + LWIN - LWOUT) %>% 
+  group_by(Hour = format(datetime, "%H")) %>% 
+  summarise(Rn = mean(Rn, na.rm = T))
+
+Rad <- Rad %>% 
+  mutate(EF_b = 1 / (bowen_ratio + 1))
+           
 #filters the LE flag conditions 2, as ET based on LE
 ET$ET[ET$LE_flag == 2] <- NA
 
