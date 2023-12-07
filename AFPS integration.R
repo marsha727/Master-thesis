@@ -71,6 +71,8 @@ AFPS_int_TS <- bind_cols(AFPS_int_SENTEK[1], AFPS_int_SENTEK[ ,27:28], AFPS_int_
 AFPS_int_TS$datetime <- as.POSIXct(AFPS_int_TS$datetime, format = "%Y-%m-%d")
 
 
+#write file for App
+write_rds(AFPS_int_TS, file = "App/AFPS_int_TS.rds")
 
 #PLOTTING
 
