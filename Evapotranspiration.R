@@ -5,7 +5,7 @@ library(data.table)
 Langeweide_data <- readRDS("Datasets/LAW_MS_ICOS.rds")
 
 ET <- Langeweide_data %>% 
-  select(datetime, sunrise, sunset, Tair, ET, VPD, RH, bowen_ratio, Tdew_EP, RAIN, WIND, LE_flag, SWIN, SWOUT, LWIN, LWOUT)
+  select(datetime, sunrise, sunset, Tair, ET, VPD, RH, bowen_ratio, Tdew_EP, RAIN, WIND, LE_flag, SWIN, SWOUT, LWIN, LWOUT, NEE_H)
            
 #filters the LE flag conditions 2, as ET based on LE
 ET$ET[ET$LE_flag == 2] <- NA
@@ -38,6 +38,13 @@ ET[outlier_p, "ET"] <- NA
 
 #after filtering daily values can be computed
 
+ET$sunset <- as.POSIXct(ET$sunset, format = "%Y-%m-%d %H:%M:%S")
+ET$sunrise <- as.POSIXct(ET$sunrise, format = "%Y-%m-%d %H:%M:%S")
+
+ET$within_range <- ET$datetime >= ET$sunrise & ET$datetime <= ET$sunset
+
+
+# Assuming within_range is a logical column in your data frame ET
 ET$SWIN <- ifelse(
   is.na(ET$SWIN) & (
     !ET$within_range |
@@ -81,12 +88,13 @@ ET_d <- ET %>%
     SWIN = ifelse(sum(!is.na(SWIN)) >= 36, mean(SWIN, na.rm = TRUE), NA),
     SWOUT = ifelse(sum(!is.na(SWOUT)) >= 36, mean(SWOUT, na.rm = TRUE), NA),
     LWIN = ifelse(sum(!is.na(LWIN)) >= 36, mean(LWIN, na.rm = TRUE), NA),
-    LWOUT = ifelse(sum(!is.na(LWOUT)) >= 36, mean(LWOUT, na.rm = TRUE), NA)
+    LWOUT = ifelse(sum(!is.na(LWOUT)) >= 36, mean(LWOUT, na.rm = TRUE), NA),
+    NEE_H = ifelse(sum(!is.na(NEE_H)) >= 36, mean(NEE_H, na.rm = TRUE), NA)
   )
 
 #Filter for the negative values
-#ET_neg <- ET_d %>% 
-  #filter(ET < 0)
+ET_neg <- ET_d %>% 
+  filter(ET < 0)
 
 #test if these high RH are also present in other RH measurements
 {Sat_dates <- ET_neg %>% 
@@ -113,17 +121,27 @@ RH_measurements_neg <- RH_measurements_d %>%
 {#lets test for Tair = Tdew conditions and P > 0 conditions
 RH_check <- ET_neg %>% 
   filter(RH > 95) %>% 
-  filter(abs(Tdew_EP - Tair) > 1 & RAIN == 0 | abs(Tdew_EP - Tair) > 2)
+  filter(abs(Tdew_EP - Tair) > 1 | RAIN > 0) 
 
 matching_row <- which(ET_d$datetime %in% RH_check$datetime) 
 
 ET_d[matching_row, "ET"] <- NA
 }
 
-{#yearly sum of ET
-ET_y <- ET %>% 
-  summarise(Tair = mean(Tair, na.rm = T), ET = sum(ET, na.rm = T), VPD = mean(VPD, na.rm = T), RH = mean(RH, na.rm = T))
-}
+#yearly sum of ET
+#ET_y <- ET %>% 
+  #summarise(Tair = mean(Tair, na.rm = T), ET = sum(ET, na.rm = T), VPD = mean(VPD, na.rm = T), RH = mean(RH, na.rm = T))
+
+#calculate EF by converting back to LE and using sensible heat flux
+ET_d <- ET_d %>%   
+  mutate(LE = (ET * 2.45) / 0.0864) %>% #LE of vapor and conversion factor W/m2
+  mutate(Rn = SWIN - SWOUT + LWIN - LWOUT) %>% 
+  mutate(EF1 = LE / Rn) %>% 
+  mutate(EF2 = 1 / (1 + bowen_ratio)) %>% 
+  mutate(EF3 = LE / (LE - (NEE_H/0.0864)))
+
+
+
 #make sure new datetime is in correct formatting
 ET_d$datetime <- as.POSIXct(ET_d$datetime, format = "%Y-%m-%d")
 ET_n$datetime <- as.POSIXct(ET_n$datetime, format = "%Y-%m-%d")
