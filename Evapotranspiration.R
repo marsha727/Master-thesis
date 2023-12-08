@@ -1,35 +1,16 @@
 library(tidyverse)
 library(EnvStats)
+library(data.table)
 
 Langeweide_data <- readRDS("Datasets/LAW_MS_ICOS.rds")
 
 ET <- Langeweide_data %>% 
-  select(datetime, sunrise, sunset, Tair, ET, VPD, RH, bowen_ratio, Tdew_EP, RAIN, WIND, SWIN, Ustar, CO2_flag, NEE_CO2, LE_flag, SWIN_KNMI, SWOUT, LWIN, LWOUT)
-
-Rad <- Langeweide_data %>% 
-  select(datetime, sunrise, sunset, SWIN_KNMI, SWIN, SWOUT, LWIN, LWOUT, bowen_ratio)
-
-Rad$sunset <- as.POSIXct(Rad$sunset, format = "%Y-%m-%d %H:%M:%S")
-Rad$sunrise <- as.POSIXct(Rad$sunrise, format = "%Y-%m-%d %H:%M:%S")
-
-Rad$within_range <- Rad$datetime >= Rad$sunrise & Rad$datetime <= Rad$sunset
-
-Rad$SWIN <- ifelse(is.na(Rad$SWIN), 0, Rad$SWIN)
-Rad$SWOUT <- ifelse(is.na(Rad$SWOUT), 0, Rad$SWOUT)
-
-Rad1 <- Rad %>% 
-  mutate(Rn = SWIN - SWOUT + LWIN - LWOUT) %>% 
-  group_by(Hour = format(datetime, "%H")) %>% 
-  summarise(Rn = mean(Rn, na.rm = T))
-
-Rad <- Rad %>% 
-  mutate(EF_b = 1 / (bowen_ratio + 1))
+  select(datetime, sunrise, sunset, Tair, ET, VPD, RH, bowen_ratio, Tdew_EP, RAIN, WIND, LE_flag, SWIN, SWOUT, LWIN, LWOUT)
            
 #filters the LE flag conditions 2, as ET based on LE
 ET$ET[ET$LE_flag == 2] <- NA
 
-ET_filter_f2 <- ET 
-ET_filter_f2$ET[ET_filter_f2$LE_flag == 1] <- NA
+#ET$ET[ET$LE_flag == 1] <- NA
 
 #Percentiles = closer to the boxplot quantiles
 lower_bound <- quantile(ET$ET, na.rm = TRUE, 0.01)
@@ -39,26 +20,54 @@ outlier_p <- which(ET$ET < lower_bound | ET$ET > upper_bound)
 
 outlier_p_ET <- data.frame(ET[outlier_p, ])
 
-ET_p_filtered <- ET
+#ET_p_filtered <- ET
 
-ET_p_filtered[outlier_p, "ET"] <- NA
+ET[outlier_p, "ET"] <- NA
 
 #Percentiles for ET LE flag 2
-lower_bound_f2 <- quantile(ET_filter_f2$ET, na.rm = TRUE, 0.01)
-upper_bound_f2 <- quantile(ET_filter_f2$ET, na.rm = TRUE, 0.99)
+#lower_bound_f2 <- quantile(ET_filter_f2$ET, na.rm = TRUE, 0.01)
+#upper_bound_f2 <- quantile(ET_filter_f2$ET, na.rm = TRUE, 0.99)
 
-outlier_p_f2 <- which(ET_filter_f2$ET < lower_bound | ET_filter_f2$ET > upper_bound)
+#outlier_p_f2 <- which(ET_filter_f2$ET < lower_bound | ET_filter_f2$ET > upper_bound)
 
-outlier_p_ET_f2 <- data.frame(ET_filter_f2[outlier_p_f2, ])
+#outlier_p_ET_f2 <- data.frame(ET_filter_f2[outlier_p_f2, ])
 
-ET_p_filtered_f2 <- ET_filter_f2
+#ET_p_filtered_f2 <- ET_filter_f2
 
-ET_p_filtered_f2[outlier_p_f2, "ET"] <- NA
+#ET_p_filtered_f2[outlier_p_f2, "ET"] <- NA
 
 #after filtering daily values can be computed
 
+ET$SWIN <- ifelse(
+  is.na(ET$SWIN) & (
+    !ET$within_range |
+      shift(!ET$within_range, 1) |
+      shift(!ET$within_range, 2) |
+      shift(!ET$within_range, 3) |
+      shift(!ET$within_range, -1) |  # Include the previous row
+      shift(!ET$within_range, -2) |
+      shift(!ET$within_range, -3) # Include two rows before
+  ),
+  0,
+  ET$SWIN
+)
+
+ET$SWOUT <- ifelse(
+  is.na(ET$SWOUT) & (
+    !ET$within_range |
+      shift(!ET$within_range, 1) |
+      shift(!ET$within_range, 2) |
+      shift(!ET$within_range, 3) |
+      shift(!ET$within_range, -1) |  # Include the previous row
+      shift(!ET$within_range, -2) |
+      shift(!ET$within_range, -3) # Include two rows before
+  ),
+  0,
+  ET$SWOUT
+)
+
 #daily values but ensure to exclude days with too few data points
-ET_d <- ET_p_filtered %>%
+ET_d <- ET %>%
   group_by(datetime = format(datetime, "%Y-%m-%d")) %>%
   summarise(
     Tair = ifelse(sum(!is.na(Tair)) >= 36, mean(Tair, na.rm = TRUE), NA),
@@ -68,18 +77,16 @@ ET_d <- ET_p_filtered %>%
     Tdew_EP = ifelse(sum(!is.na(Tdew_EP)) >= 36, mean(Tdew_EP, na.rm = TRUE), NA),
     RAIN = ifelse(sum(!is.na(RAIN)) >= 36, sum(RAIN, na.rm = TRUE), NA),
     WIND = ifelse(sum(!is.na(WIND)) >= 36, mean(WIND, na.rm = TRUE), NA),
-    SWIN = ifelse(sum(!is.na(SWIN)) >= 36, mean(SWIN, na.rm = TRUE), NA),
-    Ustar = ifelse(sum(!is.na(Ustar)) >= 36, mean(Ustar, na.rm = TRUE), NA),
     bowen_ratio = ifelse(sum(!is.na(bowen_ratio)) >= 36, mean(bowen_ratio, na.rm = TRUE), NA),
-    SWIN = ifelse(sum(!is.na(SWIN_KNMI)) >= 1, mean(SWIN_KNMI, na.rm = TRUE), NA),
-    SWOUT = ifelse(sum(!is.na(SWOUT)) >= 1, mean(SWOUT, na.rm = TRUE), NA),
-    LWIN = ifelse(sum(!is.na(LWIN)) >= 1, mean(LWIN, na.rm = TRUE), NA),
-    LWOUT = ifelse(sum(!is.na(LWOUT)) >= 1, mean(LWOUT, na.rm = TRUE), NA)
+    SWIN = ifelse(sum(!is.na(SWIN)) >= 36, mean(SWIN, na.rm = TRUE), NA),
+    SWOUT = ifelse(sum(!is.na(SWOUT)) >= 36, mean(SWOUT, na.rm = TRUE), NA),
+    LWIN = ifelse(sum(!is.na(LWIN)) >= 36, mean(LWIN, na.rm = TRUE), NA),
+    LWOUT = ifelse(sum(!is.na(LWOUT)) >= 36, mean(LWOUT, na.rm = TRUE), NA)
   )
 
 #Filter for the negative values
-ET_neg <- ET_d %>% 
-  filter(ET < 0)
+#ET_neg <- ET_d %>% 
+  #filter(ET < 0)
 
 #test if these high RH are also present in other RH measurements
 {Sat_dates <- ET_neg %>% 
@@ -179,16 +186,30 @@ ggplot(outliers_ET) +
 ggplot(RH_VPD) +
   geom_point(aes(x = VPD, y = ET))
 
-check <- ET[ET$CO2_flag == 2 & is.na(ET$NEE_CO2), ]
 
+Rad <- Langeweide_data %>% 
+  select(datetime, sunrise, sunset, SWIN_KNMI, SWIN, SWOUT, LWIN, LWOUT, bowen_ratio, ET, NEE_H)
 
+Rad$sunset <- as.POSIXct(Rad$sunset, format = "%Y-%m-%d %H:%M:%S")
+Rad$sunrise <- as.POSIXct(Rad$sunrise, format = "%Y-%m-%d %H:%M:%S")
 
+Rad$within_range <- Rad$datetime >= Rad$sunrise & Rad$datetime <= Rad$sunset
 
+Rad$SWIN <- ifelse(is.na(Rad$SWIN), 0, Rad$SWIN)
+Rad$SWOUT <- ifelse(is.na(Rad$SWOUT), 0, Rad$SWOUT)
 
-#experiment to convert to LE... forget this for now
-LE_of_vapor <- 2.45
+Rad <- Rad %>% 
+  mutate(Rn = SWIN - SWOUT + LWIN - LWOUT) #%>% 
+#group_by(Hour = format(datetime, "%H")) %>% 
+#summarise(Rn = mean(Rn, na.rm = T))
 
-ET_d <- ET_d %>% 
-  mutate(LE = (ET * 2.45) / 0.0864) %>% 
-  mutate(Rn = (SWIN + LWIN - SWOUT - LWOUT)) %>% 
-  mutate(EF = LE / Rn)
+Rad <- Rad %>% 
+  mutate(EF_b = 1 / (bowen_ratio + 1))
+
+Rad <- Rad %>% 
+  group_by(datetime = format(datetime, "%Y-%m-%d")) %>% 
+  summarise(ET = )
+
+Rad <- Rad %>% 
+  mutate(LE = (ET * 2.45) / 0.0864) %>%  #LE of vapor en omreken factor W/m2
+  mutate(EF = LE / (LE - NEE_H))
