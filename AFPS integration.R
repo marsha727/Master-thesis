@@ -70,6 +70,8 @@ AFPS_int_TS <- bind_cols(AFPS_int_SENTEK[1], AFPS_int_SENTEK[ ,27:28], AFPS_int_
 #correct datetime format
 AFPS_int_TS$datetime <- as.POSIXct(AFPS_int_TS$datetime, format = "%Y-%m-%d")
 
+AFPS_int_TS <- AFPS_int_TS %>% 
+  rename(SENTEK1 = Probe1, SENTEK3 = Probe3, TENSIO2 = AFPS2, TENSIO3 = AFPS3, OWASIS = MedianBBB)
 
 #write file for App
 write_rds(AFPS_int_TS, file = "App/AFPS_int_TS.rds")
