@@ -3,9 +3,9 @@ library(astsa)
 
 AFPS_int_TS <- readRDS("App/AFPS_int_TS.rds")
 
-print(ccf(AFPS_int_TS$SENTEK3, AFPS_int_TS$TENSIO3))
+print(ccf(AFPS_int_TS$SENTEK3, AFPS_int_TS$TENSIO2))
 
-lag2.plot(AFPS_int_TS$TENSIO3, AFPS_int_TS$SENTEK3, max.lag = 5)
+lag2.plot(na.omit(AFPS_int_TS$OWASIS), na.omit(AFPS_int_TS$SENTEK1), max.lag = 4)
 
 hist(AFPS_int_TS$TENSIO3)
 
