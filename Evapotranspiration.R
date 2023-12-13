@@ -44,16 +44,16 @@ ET$sunrise <- as.POSIXct(ET$sunrise, format = "%Y-%m-%d %H:%M:%S")
 ET$within_range <- ET$datetime >= ET$sunrise & ET$datetime <= ET$sunset
 
 
-# Assuming within_range is a logical column in your data frame ET
+# this gives SWIN a 0 (for night) but only if its within 3 hours sunset/sunrise
 ET$SWIN <- ifelse(
   is.na(ET$SWIN) & (
     !ET$within_range |
       shift(!ET$within_range, 1) |
       shift(!ET$within_range, 2) |
       shift(!ET$within_range, 3) |
-      shift(!ET$within_range, -1) |  # Include the previous row
+      shift(!ET$within_range, -1) |  
       shift(!ET$within_range, -2) |
-      shift(!ET$within_range, -3) # Include two rows before
+      shift(!ET$within_range, -3) 
   ),
   0,
   ET$SWIN
@@ -118,7 +118,7 @@ RH_measurements_neg <- RH_measurements_d %>%
   filter(datetime %in% Sat_dates$datetime)
 }
 
-{#lets test for Tair = Tdew conditions and P > 0 conditions
+#lets test for Tair = Tdew conditions and P > 0 conditions
 RH_check <- ET_neg %>% 
   filter(RH > 95) %>% 
   filter(abs(Tdew_EP - Tair) > 1 | RAIN > 0) 
@@ -126,7 +126,7 @@ RH_check <- ET_neg %>%
 matching_row <- which(ET_d$datetime %in% RH_check$datetime) 
 
 ET_d[matching_row, "ET"] <- NA
-}
+
 
 #yearly sum of ET
 #ET_y <- ET %>% 
@@ -138,9 +138,13 @@ ET_d <- ET_d %>%
   mutate(Rn = SWIN - SWOUT + LWIN - LWOUT) %>% 
   mutate(EF1 = LE / Rn) %>% 
   mutate(EF2 = 1 / (1 + bowen_ratio)) %>% 
-  mutate(EF3 = LE / (LE - (NEE_H/0.0864)))
+  mutate(EF3 = LE / (LE + (NEE_H / 0.0864))) %>% 
+  mutate(T = LE + (NEE_H / 0.0864))
 
+ET_d1 <- ET_d %>% 
+  filter(EF1 < 1 & EF1 > -1)
 
+ET_d1$datetime <- as.POSIXct(ET_d1$datetime, format = "%Y-%m-%d")
 
 #make sure new datetime is in correct formatting
 ET_d$datetime <- as.POSIXct(ET_d$datetime, format = "%Y-%m-%d")
