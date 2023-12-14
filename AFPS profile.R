@@ -55,4 +55,19 @@ SENTEK_profile3 <- SENTEK_long3 %>%
   arrange(date, depth) %>% 
   group_by(date)
 
+#Now i want to make a graph that shows AFPS over depth
+#first need to get average per season
+SENTEK_profile1_season <- SENTEK_profile1 %>% 
+ mutate(Season = case_when(
+   month(date) %in% c(1, 2, 3) ~ "JFM",
+   month(date) %in% c(4, 5, 6) ~ "AMJ",
+   month(date) %in% c(7, 8, 9) ~ "JAS",
+   month(date) %in% c(10, 11, 12) ~ "OND")) %>% 
+ group_by(Season) %>% 
+ summarise(AFPS = mean(value, na.rm = T))
+
+
+  
+
+
 
