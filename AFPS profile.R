@@ -2,13 +2,14 @@
 
 library(tidyverse)
 library(lubridate)
+library(viridis)
 
 TENSIO <- readRDS("Transformed/Langeweide_tensio_interpolated.rds")
 SENTEK <- read.csv2("Transformed/Langeweide_Sentek_AFPS.csv")
 
 #I need to change the structure of the SENTEK file
 #Make a long tibble basically just rename the to the depth it represents
-SENTEK_long1 <- tibble(date = as.POSIXct(SENTEK$datetime, format = "%Y-%m-%d %H:%M:%S"),
+SENTEK_long1 <- data.frame(date = SENTEK$datetime,
                        Depth_005 = SENTEK$SWC_1_005,
                        Depth_015 = SENTEK$SWC_1_015,
                        Depth_025 = SENTEK$SWC_1_025,
@@ -23,7 +24,7 @@ SENTEK_long1 <- tibble(date = as.POSIXct(SENTEK$datetime, format = "%Y-%m-%d %H:
                        Depth_115 = SENTEK$SWC_1_115)
 
 
-SENTEK_long3 <- tibble(date = as.POSIXct(SENTEK$datetime, format = "%Y-%m-%d %H:%M:%S"),
+SENTEK_long3 <- data.frame(date = SENTEK$datetime,
                        Depth_005 = SENTEK$SWC_3_005,
                        Depth_015 = SENTEK$SWC_3_015,
                        Depth_025 = SENTEK$SWC_3_025,
@@ -56,8 +57,6 @@ SENTEK_profile3 <- SENTEK_long3 %>%
   arrange(date, depth) %>% 
   group_by(date)
 
-SENTEK_profile3 <- data.frame(SENTEK_profile3)
-
 #calculate an average over each month
 SENTEK_profile1_month <- SENTEK_profile1 %>% 
   na.omit(date) %>% 
@@ -76,20 +75,21 @@ TENSIO_month <- TENSIO %>%
   group_by(depth, month = format(datetime, "%m")) %>% 
   summarise(AFPS2 = mean(AFPS2), AFPS3 = mean(AFPS3))
   
-ggplot(SENTEK_profile1_season, aes(x = -depth, y = AFPS, color = month)) +
+ggplot(SENTEK_profile3_month, aes(x = -depth, y = AFPS, color = month)) +
   geom_line() +
   labs(
-    title = "AFPS Over Depth for Each Month",
+    title = "AFPS Over Depth (SENTEK3)",
        x = "Depth (cm)",
        y = "AFPS (mm)") +
-  
+  scale_color_viridis_d(option = "turbo") +
   theme_minimal()
 
 ggplot(TENSIO_month, aes(x = -depth, y = AFPS2, color = month)) +
   geom_line() +
-  labs(title = "AFPS Over Depth for Each Month",
-       x = "AFPS",
-       y = "Depth") +
+  labs(title = "AFPS over depth (TENSIO2)",
+       x = "Depth (cm)",
+       y = "AFPS (mm)") +
+  scale_color_viridis_d(option = "turbo") +
   theme_minimal()
 
 #Extract dates
@@ -107,27 +107,56 @@ ggplot(SENTEK_profile1_day, aes(x = AFPS, y = -depth)) +
        y = "Depth") +
   theme_minimal()
 
-SENTEK_profile1_season <- SENTEK_profile1 %>% 
+SENTEK_profile3_season <- SENTEK_profile3 %>% 
   na.omit(date) %>% 
   mutate(Season = case_when(
-    month(date) %in% c(1, 2, 3) ~ "JFM",
-    month(date) %in% c(4, 5, 6) ~ "AMJ",
-    month(date) %in% c(7, 8, 9) ~ "JAS",
-    month(date) %in% c(10, 11, 12) ~ "OND")) %>% 
+    month(date) %in% c(1, 2, 3) ~ "1",
+    month(date) %in% c(4, 5, 6) ~ "2",
+    month(date) %in% c(7, 8, 9) ~ "3",
+    month(date) %in% c(10, 11, 12) ~ "4")) %>% 
   group_by(depth, Season) %>% 
   summarise(AFPS = mean(value, na.rm = T))
 
+TENSIO_season <- TENSIO %>% 
+  na.omit(date) %>% 
+  mutate(Season = case_when(
+    month(date) %in% c(1, 2, 3) ~ "1",
+    month(date) %in% c(4, 5, 6) ~ "2",
+    month(date) %in% c(7, 8, 9) ~ "3",
+    month(date) %in% c(10, 11, 12) ~ "4")) %>% 
+  group_by(depth, Season) %>% 
+  summarise(AFPS = mean(value, na.rm = T))
 
-SENTEK_profile1_month <- SENTEK_profile1_month %>% 
-  mutate(datetime = " ")
+custom_colors <- c("royalblue", "gold", "lawngreen", "tomato")
 
-SENTEK_profile3_month <- SENTEK_profile3_month %>% 
-  mutate(datetime = " ")
+ggplot(SENTEK_profile1_season, aes(x = -depth, y = AFPS, color = Season)) +
+  geom_line() +
+  labs(
+    title = "AFPS Over Depth (SENTEK1)",
+    x = "Depth (cm)",
+    y = "AFPS (mm)") +
+  scale_color_manual(
+    values = custom_colors,
+    breaks = c(1, 2, 3, 4),
+    labels = c("JFM", "AMJ", "JAS", "OND")
+  ) +
+  theme_minimal()
 
-TENSIO_month <- TENSIO_month %>% 
-  mutate(datetime = " ")
+#SENTEK_profile1_month <- data.frame(SENTEK_profile1_month)
+#SENTEK_profile3_month <- data.frame(SENTEK_profile3_month)
+
+#SENTEK_profile1_month <- SENTEK_profile1_month %>% 
+  #mutate(datetime = as.POSIXct(month, format = "%m"))
+
+#SENTEK_profile3_month <- SENTEK_profile3_month %>% 
+  #mutate(datetime = as.POSIXct(month, format = "%m"))
+
+#TENSIO_month <- TENSIO_month %>% 
+  #mutate(datetime = as.POSIXct())
 
 write_rds(SENTEK_profile1_month, "App/Langeweide_SENTEK1_profile.rds")
 write_rds(SENTEK_profile3_month, "App/Langeweide_SENTEK3_profile.rds")
 write_rds(TENSIO_month, "App/Langeweide_TENSIO_profile.rds")
+
+test <- readRDS("App/Langeweide_SENTEK1_profile.rds")
 
