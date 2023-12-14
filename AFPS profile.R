@@ -117,6 +117,16 @@ SENTEK_profile1_season <- SENTEK_profile1 %>%
   group_by(depth, Season) %>% 
   summarise(AFPS = mean(value, na.rm = T))
 
+
+SENTEK_profile1_month <- SENTEK_profile1_month %>% 
+  mutate(datetime = " ")
+
+SENTEK_profile3_month <- SENTEK_profile3_month %>% 
+  mutate(datetime = " ")
+
+TENSIO_month <- TENSIO_month %>% 
+  mutate(datetime = " ")
+
 write_rds(SENTEK_profile1_month, "App/Langeweide_SENTEK1_profile.rds")
 write_rds(SENTEK_profile3_month, "App/Langeweide_SENTEK3_profile.rds")
 write_rds(TENSIO_month, "App/Langeweide_TENSIO_profile.rds")
