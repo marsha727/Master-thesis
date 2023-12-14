@@ -1,6 +1,7 @@
 #For the profile over depth
 
 library(tidyverse)
+library(lubridate)
 
 TENSIO <- readRDS("Transformed/Langeweide_tensio_interpolated.rds")
 SENTEK <- read.csv2("Transformed/Langeweide_Sentek_AFPS.csv")
@@ -55,19 +56,68 @@ SENTEK_profile3 <- SENTEK_long3 %>%
   arrange(date, depth) %>% 
   group_by(date)
 
-#Now i want to make a graph that shows AFPS over depth
-#first need to get average per season
-SENTEK_profile1_season <- SENTEK_profile1 %>% 
- mutate(Season = case_when(
-   month(date) %in% c(1, 2, 3) ~ "JFM",
-   month(date) %in% c(4, 5, 6) ~ "AMJ",
-   month(date) %in% c(7, 8, 9) ~ "JAS",
-   month(date) %in% c(10, 11, 12) ~ "OND")) %>% 
- group_by(Season) %>% 
- summarise(AFPS = mean(value, na.rm = T))
+SENTEK_profile3 <- data.frame(SENTEK_profile3)
 
-
+#calculate an average over each month
+SENTEK_profile1_month <- SENTEK_profile1 %>% 
+  na.omit(date) %>% 
+  mutate(month = month(date, label = TRUE)) %>%  # Extract month as a label use lubricate package
+  group_by(depth, month) %>%
+  summarise(AFPS = mean(value, na.rm = TRUE))
   
 
+SENTEK_profile3_month <- SENTEK_profile3 %>% 
+  na.omit(date) %>%
+  mutate(month = month(date, label = TRUE)) %>%  # Extract month as a label use lubricate package
+  group_by(depth, month) %>%
+  summarise(AFPS = mean(value, na.rm = TRUE)) 
+  
+TENSIO_month <- TENSIO %>% 
+  group_by(depth, month = format(datetime, "%m")) %>% 
+  summarise(AFPS2 = mean(AFPS2), AFPS3 = mean(AFPS3))
+  
+ggplot(SENTEK_profile1_season, aes(x = -depth, y = AFPS, color = month)) +
+  geom_line() +
+  labs(
+    title = "AFPS Over Depth for Each Month",
+       x = "Depth (cm)",
+       y = "AFPS (mm)") +
+  
+  theme_minimal()
 
+ggplot(TENSIO_month, aes(x = -depth, y = AFPS2, color = month)) +
+  geom_line() +
+  labs(title = "AFPS Over Depth for Each Month",
+       x = "AFPS",
+       y = "Depth") +
+  theme_minimal()
+
+#Extract dates
+SENTEK_profile1_day <- SENTEK_profile1 %>% 
+  na.omit(date) %>% 
+  filter(date == as.POSIXct("2022-09-04 14:00:00")) %>% 
+  mutate(day = day(date)) %>%  # Extract month as a label use lubricate package
+  group_by(depth, day) %>%
+  summarise(AFPS = value)
+
+ggplot(SENTEK_profile1_day, aes(x = AFPS, y = -depth)) +
+  geom_line() +
+  labs(title = "AFPS Over Depth for Each Month",
+       x = "AFPS",
+       y = "Depth") +
+  theme_minimal()
+
+SENTEK_profile1_season <- SENTEK_profile1 %>% 
+  na.omit(date) %>% 
+  mutate(Season = case_when(
+    month(date) %in% c(1, 2, 3) ~ "JFM",
+    month(date) %in% c(4, 5, 6) ~ "AMJ",
+    month(date) %in% c(7, 8, 9) ~ "JAS",
+    month(date) %in% c(10, 11, 12) ~ "OND")) %>% 
+  group_by(depth, Season) %>% 
+  summarise(AFPS = mean(value, na.rm = T))
+
+write_rds(SENTEK_profile1_month, "App/Langeweide_SENTEK1_profile.rds")
+write_rds(SENTEK_profile3_month, "App/Langeweide_SENTEK3_profile.rds")
+write_rds(TENSIO_month, "App/Langeweide_TENSIO_profile.rds")
 
