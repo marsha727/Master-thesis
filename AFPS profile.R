@@ -38,6 +38,10 @@ SENTEK_long3 <- data.frame(date = SENTEK$datetime,
                        Depth_105 = SENTEK$SWC_3_105,
                        Depth_115 = SENTEK$SWC_3_115)
 
+#get tensio values measured
+TENSIO_real <- TENSIO %>% 
+  filter(depth == 20 | depth == 40 | depth == 60)
+
 #Creates the sequence for depths sort for each date
 Depths <- sort(unique(c(c(5, 115), seq(ceiling(5), floor(115), 10))))
 Depths <- crossing(date = unique(SENTEK_long1$date), depth = Depths)
@@ -60,22 +64,22 @@ SENTEK_profile3 <- SENTEK_long3 %>%
 #calculate an average over each month
 SENTEK_profile1_month <- SENTEK_profile1 %>% 
   na.omit(date) %>% 
-  mutate(month = month(date, label = TRUE)) %>%  # Extract month as a label use lubricate package
+  mutate(month = month(date)) %>%  # Extract month as a label use lubricate package
   group_by(depth, month) %>%
   summarise(AFPS = mean(value, na.rm = TRUE))
   
 
 SENTEK_profile3_month <- SENTEK_profile3 %>% 
   na.omit(date) %>%
-  mutate(month = month(date, label = TRUE)) %>%  # Extract month as a label use lubricate package
+  mutate(month = month(date)) %>%  # Extract month as a label use lubricate package
   group_by(depth, month) %>%
   summarise(AFPS = mean(value, na.rm = TRUE)) 
   
-TENSIO_month <- TENSIO %>% 
+TENSIO_month <- TENSIO_real %>% 
   group_by(depth, month = format(datetime, "%m")) %>% 
   summarise(AFPS2 = mean(AFPS2), AFPS3 = mean(AFPS3))
   
-ggplot(SENTEK_profile3_month, aes(x = -depth, y = AFPS, color = month)) +
+ggplot(SENTEK_profile1_month, aes(x = -depth, y = AFPS/100, color = month)) +
   geom_line() +
   labs(
     title = "AFPS Over Depth (SENTEK3)",
@@ -84,28 +88,20 @@ ggplot(SENTEK_profile3_month, aes(x = -depth, y = AFPS, color = month)) +
   scale_color_viridis_d(option = "turbo") +
   theme_minimal()
 
-ggplot(TENSIO_month, aes(x = -depth, y = AFPS2, color = month)) +
-  geom_line() +
-  labs(title = "AFPS over depth (TENSIO2)",
-       x = "Depth (cm)",
-       y = "AFPS (mm)") +
+#with monotonic polynominal plotting line
+ggplot(TENSIO_month, aes(x = -depth, y = AFPS3, color = month)) +
+  #geom_line()+
+  #geom_smooth(method = "gam", formula = y ~ s(x, k = 3, bs = "cr", m = 1), se = FALSE) +
+  geom_smooth(method = "lm", formula = y ~ poly(x, 2), se = FALSE) +
+  labs(
+    title = "AFPS over depth (TENSIO2)",
+    x = "Depth (cm)",
+    y = "AFPS (mm)"
+  ) +
   scale_color_viridis_d(option = "turbo") +
   theme_minimal()
 
-#Extract dates
-SENTEK_profile1_day <- SENTEK_profile1 %>% 
-  na.omit(date) %>% 
-  filter(date == as.POSIXct("2022-09-04 14:00:00")) %>% 
-  mutate(day = day(date)) %>%  # Extract month as a label use lubricate package
-  group_by(depth, day) %>%
-  summarise(AFPS = value)
-
-ggplot(SENTEK_profile1_day, aes(x = AFPS, y = -depth)) +
-  geom_line() +
-  labs(title = "AFPS Over Depth for Each Month",
-       x = "AFPS",
-       y = "Depth") +
-  theme_minimal()
+#seasonal
 
 SENTEK_profile3_season <- SENTEK_profile3 %>% 
   na.omit(date) %>% 
@@ -118,14 +114,13 @@ SENTEK_profile3_season <- SENTEK_profile3 %>%
   summarise(AFPS = mean(value, na.rm = T))
 
 TENSIO_season <- TENSIO %>% 
-  na.omit(date) %>% 
   mutate(Season = case_when(
-    month(date) %in% c(1, 2, 3) ~ "1",
-    month(date) %in% c(4, 5, 6) ~ "2",
-    month(date) %in% c(7, 8, 9) ~ "3",
-    month(date) %in% c(10, 11, 12) ~ "4")) %>% 
+    month(datetime) %in% c(1, 2, 3) ~ "1",
+    month(datetime) %in% c(4, 5, 6) ~ "2",
+    month(datetime) %in% c(7, 8, 9) ~ "3",
+    month(datetime) %in% c(10, 11, 12) ~ "4")) %>% 
   group_by(depth, Season) %>% 
-  summarise(AFPS = mean(value, na.rm = T))
+  summarise(AFPS2 = mean(AFPS2, na.rm = T), AFPS3 = mean(AFPS3, na.rm = T))
 
 custom_colors <- c("royalblue", "gold", "lawngreen", "tomato")
 
@@ -133,6 +128,20 @@ ggplot(SENTEK_profile1_season, aes(x = -depth, y = AFPS, color = Season)) +
   geom_line() +
   labs(
     title = "AFPS Over Depth (SENTEK1)",
+    x = "Depth (cm)",
+    y = "AFPS (mm)") +
+  scale_color_manual(
+    values = custom_colors,
+    breaks = c(1, 2, 3, 4),
+    labels = c("JFM", "AMJ", "JAS", "OND")
+  ) +
+  theme_minimal()
+
+ggplot(TENSIO_season, aes(x = -depth, y = AFPS2, color = Season)) +
+  geom_line() +
+  #geom_smooth(method = "lm", formula = y ~ poly(x, 2), se = FALSE) +
+  labs(
+    title = "AFPS Over Depth (TENSIO)",
     x = "Depth (cm)",
     y = "AFPS (mm)") +
   scale_color_manual(
