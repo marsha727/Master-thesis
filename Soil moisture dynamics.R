@@ -27,3 +27,5 @@ Langeweide_data_day <- bind_cols(Langeweide_data_day, AFPS[ ,2:6])
 Langeweide_data_day$datetime <- as.POSIXct(Langeweide_data_day$datetime, "%Y-%m-%d")
 
 write_rds(Langeweide_data_day, "App/Langeweide_extended.rds")
+
+
