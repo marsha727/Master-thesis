@@ -182,14 +182,15 @@ ggplot(ET_p_filtered_f2) +
 
 #daily sum ET filtered
 ggplot(ET_d) +
-  geom_line(aes(x = datetime, y = ET, color = "ET"), size = 0.55) +
+  geom_point(aes(x = datetime, y = Rn, color = "Rn"), size = 1 ) +
+  geom_point(aes(x = datetime, y = LE, color = "LE"), size = 1) +
   labs(
-    title = "daily ET",
+    title = "Net radiation (Rn) and Latent heat (LE)",
     x = "datetime",
-    y = "ET (mm/d)"
+    y = "RN/LE (W/m2)"
   ) +
   scale_color_manual(
-    values = c("ET" = "tomato"),
+    values = c("Rn" = "skyblue", LE = "tomato"),
     name = "Legend"
   ) +
   theme(
