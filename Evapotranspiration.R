@@ -12,6 +12,14 @@ ET$ET[ET$LE_flag == 2] <- NA
 
 #ET$ET[ET$LE_flag == 1] <- NA
 
+#filter for wind conditions that are from SW (least water influence)
+#ET_wind <- ET %>% 
+  #filter(!WIND >= 210 & WIND <= 240)
+
+#matching_row <- which(ET$datetime %in% ET_wind$datetime) 
+
+#ET[matching_row, "ET"] <- NA
+
 #Percentiles = closer to the boxplot quantiles
 lower_bound <- quantile(ET$ET, na.rm = TRUE, 0.01)
 upper_bound <- quantile(ET$ET, na.rm = TRUE, 0.99)
@@ -127,6 +135,13 @@ matching_row <- which(ET_d$datetime %in% RH_check$datetime)
 
 ET_d[matching_row, "ET"] <- NA
 
+#filter for wind conditions that are from SW (least water influence)
+ET_wind <- ET_d %>% 
+  filter(!WIND >= 210 & WIND <= 240)
+
+matching_row <- which(ET_d$datetime %in% ET_wind$datetime) 
+
+ET_d[matching_row, "ET"] <- NA
 
 #yearly sum of ET
 #ET_y <- ET %>% 
@@ -156,6 +171,8 @@ ET_d$datetime <- format(ET_d$datetime, "%Y-%m-%d")
 #file writing
 write.csv2(ET_d, file = "Transformed/ET_langeweide.csv")
 
+write_rds(ET_d, file = "App/Langeweide_ET.rds")
+
 test.read <- read.csv2("Transformed/ET_langeweide.csv")
 
 
@@ -182,15 +199,16 @@ ggplot(ET_p_filtered_f2) +
 
 #daily sum ET filtered
 ggplot(ET_d) +
-  geom_point(aes(x = datetime, y = Rn, color = "Rn"), size = 1 ) +
-  geom_point(aes(x = datetime, y = LE, color = "LE"), size = 1) +
+  geom_point(aes(x = datetime, y = LE, color = "LE"), size = 1 ) +
+  geom_point(aes(x = datetime, y = H, color = "H"), size = 1) +
+  geom_point(aes(x = datetime, y = ))
   labs(
     title = "Net radiation (Rn) and Latent heat (LE)",
     x = "datetime",
     y = "RN/LE (W/m2)"
   ) +
   scale_color_manual(
-    values = c("Rn" = "skyblue", LE = "tomato"),
+    values = c("LE" = "skyblue", "H" = "tomato"),
     name = "Legend"
   ) +
   theme(
@@ -198,6 +216,24 @@ ggplot(ET_d) +
     legend.title = element_text(size = 10),
     legend.text = element_text(size = 9),
   )
+
+  #EF
+  ggplot(ET_d) +
+    geom_point(aes(x = datetime, y = EF3, color = "EF"), size = 1.5 ) +
+  labs(
+    title = "The evaporative fraction (EF)",
+    x = "datetime",
+    y = "EF (0-1)"
+  ) +
+    scale_color_manual(
+      values = c("EF" = "skyblue"),
+      name = "Legend"
+    ) +
+    theme(
+      plot.title = element_text(size = 18, hjust = 0.5),
+      legend.title = element_text(size = 10),
+      legend.text = element_text(size = 9),
+    )  
 
 
 ggplot(ET) +
