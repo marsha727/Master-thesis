@@ -49,3 +49,7 @@ GWL_mmv <- GWL_half_hourly %>%
   left_join(GWL_mmv, by = "datetime")
 
 compare <- bind_cols(GWL_mmv$GWL_mean, GWL_old$WL_cor, GWL_old$datetime)
+
+write_rds(GWL_mmv, file = "Transformed/Langeweide_groundwater.rds")
+
+test <- readRDS("Transformed/Langeweide_groundwater.rds")
