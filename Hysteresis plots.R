@@ -5,7 +5,7 @@ library(lubridate)
 # Assuming AFPS_int_TS is your dataframe and datetime is in POSIXct format
 
 # Extract month names and create a new variable
-AFPS_int_TS$month_name <- month(AFPS_int_TS$datetime, label = TRUE)
+AFPS_int_TS$month_name <- month(AFPS_int_TS$datetime)
 
 # Plot the graph
 p <- ggplot(AFPS_int_TS) +
