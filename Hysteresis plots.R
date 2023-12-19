@@ -1,6 +1,7 @@
 library(ggplot2)
 library(RColorBrewer)
 library(lubridate)
+library(ggquiver)
 
 # Assuming AFPS_int_TS is your dataframe and datetime is in POSIXct format
 
@@ -11,12 +12,13 @@ AFPS_int_TS$month_name <- month(AFPS_int_TS$datetime)
 p <- ggplot(AFPS_int_TS) +
   geom_path(aes(x = TENSIO3, y = SENTEK3, color = month_name), size = 1.5) +
   labs(
-    title = "TENSIO x SENTEK",
-    x = "TENSIO (mm)",
-    y = "SENTEK (mm)"
+    title = "Hysteresis drying and wetting cycles",
+    x = "TENSIO AFPS (mm)",
+    y = "SENTEK AFPS (mm)"
   ) +
   #scale_color_viridis_d(option = "inferno")
-  scale_color_brewer(type = "seq", palette = "RdYlGn")
+  scale_color_distiller(palette = "RdYlGn", direction = 1, guide = guide_legend(title = "Month"), labels = month.abb[unique(AFPS_int_TS$month_name)]) +
+  theme_minimal()
 
 # Create a data frame for arrows
 arrow_data <- data.frame(
@@ -33,5 +35,6 @@ arrow_color <- "black"
 p + geom_segment(data = arrow_data, aes(x = x, y = y, xend = xend, yend = yend),
                  arrow = arrow(type = "closed", length = unit(arrow_size, "inches")), 
                  color = arrow_color, size = 0, lineend = "butt")
+
 
 
