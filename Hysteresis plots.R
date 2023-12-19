@@ -80,7 +80,3 @@ result_segment$combined_cycle_type <- rowwise(result_segment) %>%
 
 
 
-
-
-
-
