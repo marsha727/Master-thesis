@@ -1,5 +1,6 @@
 library(pracma)
 library(tidyverse)
+library(astsa)
 
 AFPS_int_TS <- read_rds("App/AFPS_int_TS.rds")
 
@@ -40,3 +41,9 @@ wetting_cycle <- lapply(1:nrow(peak_T3), function(i){
 })
 
 wetting_TS <- do.call(rbind, wetting_cycle)
+
+
+
+
+
+
