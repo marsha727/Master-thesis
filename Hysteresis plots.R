@@ -1,4 +1,4 @@
-library(ggplot2)
+library(tidyverse)
 library(RColorBrewer)
 library(lubridate)
 library(ggquiver)
@@ -48,7 +48,7 @@ sensors <- c("SENTEK1", "SENTEK3", "TENSIO2", "TENSIO3")
 result_segment <- data.frame(datetime = AFPS_int_TS$datetime,
                              cycle_type = "None")
 
-rate_threshold <- 0.5
+rate_threshold <- 1
 
 for(sensor in sensors){
   
@@ -56,21 +56,22 @@ for(sensor in sensors){
   
   rate_of_change <- c(NA, diff(AFPS))
   
-  drying_indices <- which(rate_of_change < -rate_threshold)
-  wetting_indices <- which(rate_of_change > rate_threshold)
+  drying_indices <- which(rate_of_change > rate_threshold)
+  wetting_indices <- which(rate_of_change < -rate_threshold)
   
   result_segment[[paste(sensor, "cycle_type", sep = "_")]] <- "None"
   result_segment[[paste(sensor, "cycle_type", sep = "_")]][drying_indices] <- "Drying"
   result_segment[[paste(sensor, "cycle_type", sep = "_")]][wetting_indices] <- "Wetting"
-}
+  
+}  
 
 # Optionally, you can combine the results into a single column for easier analysis
 result_segment$combined_cycle_type <- rowwise(result_segment) %>%
   select(starts_with("cycle_type")) %>%
   apply(1, function(x) ifelse("Drying" %in% x, "Drying", ifelse("Wetting" %in% x, "Wetting", "None")))
 
-
-
+wetting_values <- AFPS_int_TS[result_segment$combined_cycle_type == "Wetting", ]
+drying_values <- AFPS_int_TS[result_segment$combined_cycle_type == "Drying", ]
 
 
 
