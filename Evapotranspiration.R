@@ -163,7 +163,6 @@ ET_d1$datetime <- as.POSIXct(ET_d1$datetime, format = "%Y-%m-%d")
 
 #make sure new datetime is in correct formatting
 ET_d$datetime <- as.POSIXct(ET_d$datetime, format = "%Y-%m-%d")
-ET_n$datetime <- as.POSIXct(ET_n$datetime, format = "%Y-%m-%d")
 
 #format for writing
 ET_d$datetime <- format(ET_d$datetime, "%Y-%m-%d")
