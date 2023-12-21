@@ -9,12 +9,6 @@ AFPS_int_TS <- read_rds("App/AFPS_int_TS.rds")
 
 columns <- c("SENTEK1", "SENTEK3", "TENSIO2", "TENSIO3")
 
-#peaks_list <- lapply(columns, function(col){
-  #peak_indices <- findpeaks(AFPS_int_TS[[col]], minpeakheight = 17)
-  #peaks_dates <- AFPS_int_TS$datetime[peak_indices]
-  #return(data.frame(datetime = peaks_dates, peak = peak_indices))
-#})
-
 peak_T3 <- findpeaks(AFPS_int_TS$TENSIO3, minpeakheight = 17)
 print(peak_T3)
 
@@ -22,6 +16,23 @@ extracted_peaks <- lapply(1:nrow(peak_T3), function(i){
   start_index <- peak_T3[i, 3]
   end_index <- peak_T3[i, 4]
   peaks_in_range <- AFPS_int_TS[start_index:end_index, ]
+  print(peaks_in_range)
+  
+  # Convert datetime to numeric for time differences
+  time_diff <- as.numeric(diff(peaks_in_range$datetime))
+  
+  # Calculate the slope for each column
+  slopes <- lapply(peaks_in_range[, -1], function(column) {
+    diff_column <- diff(column)
+    slope_column <- c(NA, diff_column / time_diff)
+    return(slope_column)
+  })
+  
+  for (j in seq_along(slopes)) {
+    col_name <- paste(names(peaks_in_range)[j + 1], "_slope", sep = "")
+    peaks_in_range[[col_name]] <- slopes[[j]]
+  }
+  
   peaks_in_range$cycle_number <- i
   return(peaks_in_range)
 })
@@ -46,37 +57,41 @@ wetting_cycle <- lapply(1:nrow(peak_T3), function(i){
 
 wetting_TS <- do.call(rbind, wetting_cycle)
 
-
-extracted_peaks_TS <- extracted_peaks_TS %>%
-  group_by(cycle_number) %>%
-  mutate(correlation = cor(SENTEK3, TENSIO3, method = "pearson"))
-
-
-correlation_plots <- extracted_peaks_TS %>% 
-  ggplot(aes(x = SENTEK3, y = TENSIO3)) +
-  geom_point() +
-  facet_wrap(~cycle_number, scales = "free") + 
+ggplot(extracted_peaks_TS, aes(x = SENTEK1, y = TENSIO3 )) +
   stat_smooth(method = "lm", col = "red") +
-  labs(title = "Correlation per month") +
-  geom_text(aes(label = sprintf("R = %.2f", correlation)))
+  geom_point() +
+  labs(title = "Correlation plot") +
+  stat_correlation(mapping = use_label(c("R", "P")), 
+                   size = 4, 
+                   label.x = "left", 
+                   label.y = "top"
+  )
+ 
+ggplot(wetting_TS, aes(x = SENTEK1, y = TENSIO3)) +
+  stat_smooth(method = "lm", col = "red") +
+  geom_point() +
+  labs(title = "Correlation plot") +
+  stat_correlation(mapping = use_label(c("R", "P")), 
+                   size = 4, 
+                   label.x = "left", 
+                   label.y = "top"
+  ) 
   
-print(correlation_plots)
-
 
 # Calculate correlation separately for each cycle
 correlation_data <- extracted_peaks_TS %>%
   group_by(cycle_number) %>%
-  summarise(correlation = cor(SENTEK3, TENSIO3, method = "pearson"))
+  summarise(correlation = cor(SENTEK1, TENSIO2, method = "pearson"))
 
 # Create a scatter plot with a single correlation coefficient for each cycle
-correlation_plot <- ggplot(extracted_peaks_TS, aes(x = SENTEK3, y = TENSIO3)) +
-  geom_point() +
+correlation_plot <- ggplot(extracted_peaks_TS, aes(x = SENTEK1, y = TENSIO2)) +
   stat_smooth(method = "lm", col = "red") +
+  geom_point() +
   labs(title = "Correlation per cycle") +
   facet_wrap(~cycle_number, scales = "free") +
   geom_text(data = correlation_data, aes(x = Inf, y = -Inf, label = sprintf("R = %.2f", correlation)), vjust = 1, hjust = 1, size = 3)
 
-
+#stat correlation for plotting and computing stats
 correlation_plot + stat_correlation(mapping = use_label(c("R", "P")), 
                                     size = 4, 
                                     label.x = "left", 
