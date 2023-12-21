@@ -31,7 +31,7 @@ lag2.plot(AFPS_int_TS2$TENSIO2, AFPS_int_TS2$SENTEK1, max.lag = 5)
 
 #correlaiton heat map
 
-M <- cor(AFPS_int_TS1[, 2:6], method = "spearman", use = "pairwise.complete.obs")
+M <- cor(AFPS_int_TS[, 2:6], method = "spearman", use = "pairwise.complete.obs")
 
 # Set both diagonal and upper triangular part to NA
 M[upper.tri(M)] <- NA
