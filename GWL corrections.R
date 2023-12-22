@@ -55,15 +55,17 @@ GWL_old <- GWL_old %>%
   mutate(GWL_mean = rowMeans(select(., starts_with("WL")), na.rm = TRUE))
 
 start_date <- as.POSIXct("2022-04-02 01:00:00", format = "%Y-%m-%d %H:%M")
-end_date <- as.POSIXct("2022-04-21 08:30:00")
+end_date <- as.POSIXct("2022-04-21 07:30:00")
 
 GWL_subset <- GWL_old %>% 
-  filter(datetime >= start_date & datetime <= end_date)
+  filter(datetime >= start_date & datetime <= end_date) %>% 
+  select(-WL_cor)
 
-
+GWL_corrected <- rbind(GWL_subset, GWL_mmv)
 
 compare <- bind_cols(GWL_mmv$GWL_mean, GWL_old$WL_cor, GWL_old$datetime)
 
 write_rds(GWL_mmv, file = "Transformed/Langeweide_groundwater.rds")
+write_rds(GWL_old, file = "Transformed/Langeweide_groundwater_old.rds")
 
 test <- readRDS("Transformed/Langeweide_groundwater.rds")
