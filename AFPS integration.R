@@ -4,11 +4,13 @@ AFPS_SENTEK <- read.csv2("Transformed/Langeweide_Sentek_AFPS.csv")
 AFPS_TENSIO <- read.csv2("Transformed/Langeweide_tensio_interpolated.csv")
 OWASIS_BBB <- read.csv2("Transformed/Langeweide_OWASIS_BBB.csv")
 Langeweide_data <- readRDS("Datasets/LAW_MS_ICOS.RDS")
+ET <- readRDS("App/Langeweide_ET.rds")
 
 AFPS_SENTEK$datetime <- as.POSIXct(AFPS_SENTEK$datetime, format = "%Y-%m-%d %H:%M:%S")
 AFPS_TENSIO$TIMESTAMP <- as.POSIXct(AFPS_TENSIO$datetime, format = "%Y-%m-%d %H:%M:%S")
 OWASIS_BBB$Date <- as.POSIXct(OWASIS_BBB$Date, format = "%Y-%m-%d")
 Langeweide_data$datetime <- as.POSIXct(Langeweide_data$datetime, format = "%Y-%m-%d %H:%M:%S")
+ET$datetime <- as.POSIXct(ET$datetime, format = "%Y-%m-%d")
 
 #Fist check max depth of OWASIS_BBB in cm
 Max_GW_OWASIS <- abs(min(OWASIS_BBB$MedianGW_mmv)*100)
@@ -51,15 +53,27 @@ Langeweide_data <- Langeweide_data %>%
 OWASIS_BBB <- OWASIS_BBB %>% 
   filter(Date >= start_date & Date <= end_date3)
 
+ET <- ET %>% 
+  filter(datetime >= start_date & datetime <= end_date3)
+
+#make subselection of langeweide before using
+Langeweide_data <- Langeweide_data %>% 
+  select(datetime, WL_cor, BBB,
+         NEE_CO2, NEE_CO2_MDS, NEE_CO2_MDS2, 
+         Tsoil_1_005, Tsoil_1_015, Tsoil_1_025, Tsoil_1_035, Tsoil_1_045, Tsoil_1_055,
+         Tsoil_3_065, Tsoil_1_075, Tsoil_1_085, Tsoil_1_095, Tsoil_1_105, Tsoil_3_005, Tsoil_3_015, Tsoil_3_025, Tsoil_3_035, Tsoil_3_045, Tsoil_3_055,
+         Tsoil_3_065, Tsoil_3_075, Tsoil_3_085, Tsoil_3_095, Tsoil_3_105)
+
 #need to aggregate by day for OWASIS
 AFPS_int_SENTEK <- AFPS_int_SENTEK %>% 
   group_by(datetime = format(datetime, "%Y-%m-%d")) %>% 
   summarise(across(everything(), ~mean(., na.rm = TRUE)))
 
 #need to aggregate by day for OWASIS
-AFPS_int_TENSIO<- AFPS_int_TENSIO %>% 
+AFPS_int_TENSIO <- AFPS_int_TENSIO %>% 
   group_by(datetime = as.Date(datetime)) %>% 
   summarise(across(everything(), ~mean(., na.rm = TRUE)))
+
 
 #Correct datetime format
 AFPS_int_SENTEK$datetime <- as.POSIXct(AFPS_int_SENTEK$datetime, format = "%Y-%m-%d")
@@ -72,6 +86,10 @@ AFPS_int_TS$datetime <- as.POSIXct(AFPS_int_TS$datetime, format = "%Y-%m-%d")
 
 AFPS_int_TS <- AFPS_int_TS %>% 
   rename(SENTEK1 = Probe1, SENTEK3 = Probe3, TENSIO2 = AFPS2, TENSIO3 = AFPS3, OWASIS = MedianBBB)
+
+Langeweide <- Langeweide_data %>% 
+  select(day, )
+
 
 #write file for App
 write_rds(AFPS_int_TS, file = "App/AFPS_int_TS.rds")
