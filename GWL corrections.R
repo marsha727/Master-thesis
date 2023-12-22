@@ -47,6 +47,7 @@ GWL_mmv <- GWL_half_hourly %>%
 
 #Now i want to estimate start of april based on old GWL data 
 GWL_old <- GWL_old %>%
+  select(datetime, WL_1, WL_2, WL_3, WL_4, WL_5) %>% 
   mutate(WL_1 = (WL_1/100 - RFH$NAP_2021_mv[1])*100,
          WL_2 = (WL_2/100 - RFH$NAP_2021_mv[2])*100,
          WL_3 = (WL_3/100 - RFH$NAP_2021_mv[3])*100,
@@ -68,4 +69,4 @@ compare <- bind_cols(GWL_mmv$GWL_mean, GWL_old$WL_cor, GWL_old$datetime)
 write_rds(GWL_mmv, file = "Transformed/Langeweide_groundwater.rds")
 write_rds(GWL_old, file = "Transformed/Langeweide_groundwater_old.rds")
 
-test <- readRDS("Transformed/Langeweide_groundwater.rds")
+test <- readRDS("Transformed/Langeweide_groundwater_old.rds")
