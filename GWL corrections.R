@@ -11,9 +11,6 @@ RFH <- read_xlsx("Datasets/Peilbuizen_nap_langeweide.xlsx")
 GWL_old <- Langeweide_data %>% 
   select(datetime, WL_1, WL_2, WL_3, WL_4, WL_5, WL_cor)
 
-start_time <- min(GWL$datetime)
-end_time <- max(GWL_old$datetime)
-
 #ensure the date formatting
 GWL$datetime <- as.POSIXct(GWL$datetime, format = "%Y-%m-%d %H:%M:%S")
 
@@ -23,6 +20,9 @@ GWL <- GWL %>%
 
 #order according to date
 GWL <- GWL[order(GWL$datetime), ]
+
+start_time <- min(GWL$datetime)
+end_time <- max(GWL_old$datetime)
 
 #substract the surface height/maaiveldhoogte
 GWL_mmv <- GWL %>%
@@ -54,10 +54,10 @@ GWL_old <- GWL_old %>%
          WL_5 = (WL_5/100 - RFH$NAP_2021_mv[5])*100) %>%
   mutate(GWL_mean = rowMeans(select(., starts_with("WL")), na.rm = TRUE))
 
-start_date <- as.POSIXct("2022-04-02 00:00:00", format = "%Y-%m-%d %H:%M")
-end_date <- as.POSIXct("2022-04-20 00:00:00")
+start_date <- as.POSIXct("2022-04-02 01:00:00", format = "%Y-%m-%d %H:%M")
+end_date <- as.POSIXct("2022-04-21 08:30:00")
 
-GWL_old <- GWL_old %>% 
+GWL_subset <- GWL_old %>% 
   filter(datetime >= start_date & datetime <= end_date)
 
 
