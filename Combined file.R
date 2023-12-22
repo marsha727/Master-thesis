@@ -36,4 +36,7 @@ Langeweide <- cbind(AFPS, WL, ET, Tsoil)
 Langeweide <- Langeweide %>% 
   select(-c(EF1, EF2, datetime2, datetime3, T, datetime4))
 
+write_rds(Langeweide, "App/Langeweide_full.rds")
+
+test <- readRDS("App/Langeweide_full.rds")
 
