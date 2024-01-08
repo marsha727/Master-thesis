@@ -6,6 +6,7 @@ library(viridis)
 
 TENSIO <- readRDS("Transformed/Langeweide_tensio_interpolated.rds")
 SENTEK <- read.csv2("Transformed/Langeweide_Sentek_AFPS.csv")
+GWL <- readRDS("Transformed/Langeweide_groundwater.rds")
 
 #I need to change the structure of the SENTEK file
 #Make a long tibble basically just rename the to the depth it represents
@@ -61,31 +62,44 @@ SENTEK_profile3 <- SENTEK_long3 %>%
   arrange(date, depth) %>% 
   group_by(date)
 
+SENTEK_profile1 <- SENTEK_profile1 %>% 
+  filter(date >= "2022-04-02" & date <= "2022-11-01")
+
+SENTEK_profile3 <- SENTEK_profile3 %>% 
+  filter(date >= "2022-04-02" & date <= "2022-11-01")
+
+TENSIO_real <- TENSIO_real %>% 
+  filter(datetime >= "2022-04-02" & datetime <= "2022-11-01")
+
 #calculate an average over each month
 SENTEK_profile1_month <- SENTEK_profile1 %>% 
   na.omit(date) %>% 
   mutate(month = month(date)) %>%  # Extract month as a label use lubricate package
   group_by(depth, month) %>%
-  summarise(AFPS = mean(value, na.rm = TRUE))
-  
+  summarise(AFPS = mean(value, na.rm = TRUE)) %>% 
+  rename(AFPS1 = AFPS)
 
 SENTEK_profile3_month <- SENTEK_profile3 %>% 
   na.omit(date) %>%
   mutate(month = month(date)) %>%  # Extract month as a label use lubricate package
   group_by(depth, month) %>%
-  summarise(AFPS = mean(value, na.rm = TRUE)) 
+  summarise(AFPS = mean(value, na.rm = TRUE)) %>% 
+  rename(AFPS3 = AFPS)
+
+SENTEK_month <- cbind(SENTEK_profile1_month, SENTEK_profile3_month[,3])
   
 TENSIO_month <- TENSIO_real %>% 
   group_by(depth, month = format(datetime, "%m")) %>% 
   summarise(AFPS2 = mean(AFPS2), AFPS3 = mean(AFPS3))
+
   
-ggplot(SENTEK_profile1_month, aes(x = -depth, y = AFPS/100, color = month)) +
-  geom_line() +
+ggplot(SENTEK_profile3_month, aes(x = -depth, y = AFPS/100, color = month)) +
+  geom_point() +
   labs(
     title = "AFPS Over Depth (SENTEK3)",
        x = "Depth (cm)",
        y = "AFPS (mm)") +
-  scale_color_viridis_d(option = "turbo") +
+  scale_color_viridis_c(option = "turbo") +
   theme_minimal()
 
 #with monotonic polynominal plotting line
@@ -103,6 +117,17 @@ ggplot(TENSIO_month, aes(x = -depth, y = AFPS3, color = month)) +
 
 #seasonal
 
+SENTEK_profile1_season <- SENTEK_profile1 %>% 
+  na.omit(date) %>% 
+  mutate(Season = case_when(
+    month(date) %in% c(1, 2, 3) ~ "1",
+    month(date) %in% c(4, 5, 6) ~ "2",
+    month(date) %in% c(7, 8, 9) ~ "3",
+    month(date) %in% c(10, 11, 12) ~ "4")) %>% 
+  group_by(depth, Season) %>% 
+  summarise(AFPS = mean(value, na.rm = T)) %>% 
+  rename(AFPS1 = AFPS)
+
 SENTEK_profile3_season <- SENTEK_profile3 %>% 
   na.omit(date) %>% 
   mutate(Season = case_when(
@@ -111,9 +136,13 @@ SENTEK_profile3_season <- SENTEK_profile3 %>%
     month(date) %in% c(7, 8, 9) ~ "3",
     month(date) %in% c(10, 11, 12) ~ "4")) %>% 
   group_by(depth, Season) %>% 
-  summarise(AFPS = mean(value, na.rm = T))
+  summarise(AFPS = mean(value, na.rm = T)) %>% 
+  rename(AFPS3 = AFPS)
 
-TENSIO_season <- TENSIO %>% 
+
+SENTEK_season <- cbind(SENTEK_profile1_season, SENTEK_profile3_season[,3])
+
+TENSIO_season <- TENSIO_real %>% 
   mutate(Season = case_when(
     month(datetime) %in% c(1, 2, 3) ~ "1",
     month(datetime) %in% c(4, 5, 6) ~ "2",
@@ -122,10 +151,12 @@ TENSIO_season <- TENSIO %>%
   group_by(depth, Season) %>% 
   summarise(AFPS2 = mean(AFPS2, na.rm = T), AFPS3 = mean(AFPS3, na.rm = T))
 
+
+
 custom_colors <- c("royalblue", "gold", "lawngreen", "tomato")
 
-ggplot(SENTEK_profile1_season, aes(x = -depth, y = AFPS, color = Season)) +
-  geom_line() +
+ggplot(SENTEK_season) +
+  geom_line(aes(x = -depth, y = AFPS1, color = Season)) +
   labs(
     title = "AFPS Over Depth (SENTEK1)",
     x = "Depth (cm)",
@@ -136,6 +167,7 @@ ggplot(SENTEK_profile1_season, aes(x = -depth, y = AFPS, color = Season)) +
     labels = c("JFM", "AMJ", "JAS", "OND")
   ) +
   theme_minimal()
+
 
 ggplot(TENSIO_season, aes(x = -depth, y = AFPS2, color = Season)) +
   geom_line() +
@@ -151,17 +183,46 @@ ggplot(TENSIO_season, aes(x = -depth, y = AFPS2, color = Season)) +
   ) +
   theme_minimal()
 
-#SENTEK_profile1_month <- data.frame(SENTEK_profile1_month)
-#SENTEK_profile3_month <- data.frame(SENTEK_profile3_month)
 
-#SENTEK_profile1_month <- SENTEK_profile1_month %>% 
-  #mutate(datetime = as.POSIXct(month, format = "%m"))
+#DEPTHS on Y
 
-#SENTEK_profile3_month <- SENTEK_profile3_month %>% 
-  #mutate(datetime = as.POSIXct(month, format = "%m"))
+ggplot(SENTEK_season, aes(x = AFPS1, y = -depth, color = Season, linetype = "AFPS1")) +
+  geom_path() +
+  geom_path(aes(x = AFPS3, y = -depth, color = factor(Season), linetype = "AFPS3")) +
+  labs(
+    title = "AFPS Over Depth (SENTEK1)",
+    x = "AFPS (mm)",
+    y = "Depth (cm)",
+    linetype = "Probe"
+  ) +
+  scale_color_manual(
+    values = custom_colors,
+    breaks = c(1, 2, 3, 4),
+    labels = c("JFM", "AMJ", "JAS", "OND")
+  ) +
+  scale_linetype_manual(
+    values = c(AFPS1 = "solid", AFPS3 = "dotdash"),
+    breaks = c("AFPS1", "AFPS3"),
+    labels = c("AFPS1", "AFPS3")
+  ) +
+  theme_minimal()
 
-#TENSIO_month <- TENSIO_month %>% 
-  #mutate(datetime = as.POSIXct())
+ggplot(TENSIO_season, aes(x = -depth, y = AFPS2, color = Season)) +
+  #geom_path() +
+  stat_smooth(method = "lm", formula = y ~ poly(x, 2), se = FALSE) +
+  coord_flip() +
+  #geom_smooth(method = "lm", formula = y ~ poly(x, 2), se = FALSE) +
+  labs(
+    title = "AFPS Over Depth (TENSIO)",
+    x = "AFPS (mm)",
+    y = "Depth (cm)") +
+  scale_color_manual(
+    values = custom_colors,
+    breaks = c(1, 2, 3, 4),
+    labels = c("JFM", "AMJ", "JAS", "OND")
+  ) +
+  theme_minimal()
+
 
 write_rds(SENTEK_profile1_month, "App/Langeweide_SENTEK1_profile.rds")
 write_rds(SENTEK_profile3_month, "App/Langeweide_SENTEK3_profile.rds")
