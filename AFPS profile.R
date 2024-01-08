@@ -71,20 +71,28 @@ SENTEK_profile3 <- SENTEK_profile3 %>%
 TENSIO_real <- TENSIO_real %>% 
   filter(datetime >= "2022-04-02" & datetime <= "2022-11-01")
 
+GWL <- GWL %>% 
+  filter(datetime >= "2022-04-02" & datetime <= "2022-11-01")
+
 #calculate an average over each month
 SENTEK_profile1_month <- SENTEK_profile1 %>% 
   na.omit(date) %>% 
-  mutate(month = month(date)) %>%  # Extract month as a label use lubricate package
+  mutate(month = as.character(month(date))) %>%  # Extract month as a label use lubricate package
   group_by(depth, month) %>%
   summarise(AFPS = mean(value, na.rm = TRUE)) %>% 
   rename(AFPS1 = AFPS)
 
 SENTEK_profile3_month <- SENTEK_profile3 %>% 
   na.omit(date) %>%
-  mutate(month = month(date)) %>%  # Extract month as a label use lubricate package
+  mutate(month = as.character(month(date))) %>%  # Extract month as a label use lubricate package
   group_by(depth, month) %>%
   summarise(AFPS = mean(value, na.rm = TRUE)) %>% 
   rename(AFPS3 = AFPS)
+
+GWL_month <- GWL %>% 
+  mutate(month = as.character(month(datetime))) %>% 
+  group_by(month) %>% 
+  summarise(GWL = mean(GWL_mean, na.rm = TRUE))
 
 SENTEK_month <- cbind(SENTEK_profile1_month, SENTEK_profile3_month[,3])
   
@@ -120,10 +128,10 @@ ggplot(TENSIO_month, aes(x = -depth, y = AFPS3, color = month)) +
 SENTEK_profile1_season <- SENTEK_profile1 %>% 
   na.omit(date) %>% 
   mutate(Season = case_when(
-    month(date) %in% c(1, 2, 3) ~ "1",
-    month(date) %in% c(4, 5, 6) ~ "2",
-    month(date) %in% c(7, 8, 9) ~ "3",
-    month(date) %in% c(10, 11, 12) ~ "4")) %>% 
+    month(date) %in% c(3, 4, 5) ~ "Spring",
+    month(date) %in% c(6, 7, 8) ~ "Summer",
+    month(date) %in% c(9, 10, 11) ~ "Autumn",
+    month(date) %in% c(12, 1, 2) ~ "Winter")) %>% 
   group_by(depth, Season) %>% 
   summarise(AFPS = mean(value, na.rm = T)) %>% 
   rename(AFPS1 = AFPS)
@@ -131,10 +139,10 @@ SENTEK_profile1_season <- SENTEK_profile1 %>%
 SENTEK_profile3_season <- SENTEK_profile3 %>% 
   na.omit(date) %>% 
   mutate(Season = case_when(
-    month(date) %in% c(1, 2, 3) ~ "1",
-    month(date) %in% c(4, 5, 6) ~ "2",
-    month(date) %in% c(7, 8, 9) ~ "3",
-    month(date) %in% c(10, 11, 12) ~ "4")) %>% 
+    month(date) %in% c(3, 4, 5) ~ "Spring",
+    month(date) %in% c(6, 7, 8) ~ "Summer",
+    month(date) %in% c(9, 10, 11) ~ "Autumn",
+    month(date) %in% c(12, 1, 2) ~ "Winter")) %>% 
   group_by(depth, Season) %>% 
   summarise(AFPS = mean(value, na.rm = T)) %>% 
   rename(AFPS3 = AFPS)
@@ -186,9 +194,9 @@ ggplot(TENSIO_season, aes(x = -depth, y = AFPS2, color = Season)) +
 
 #DEPTHS on Y
 
-ggplot(SENTEK_season, aes(x = AFPS1, y = -depth, color = Season, linetype = "AFPS1")) +
-  geom_path() +
-  geom_path(aes(x = AFPS3, y = -depth, color = factor(Season), linetype = "AFPS3")) +
+ggplot(SENTEK_season) +
+  geom_path(aes(x = AFPS1, y = -depth, color = Season, linetype = "AFPS1")) +
+  geom_path(aes(x = AFPS3, y = -depth, color = Season, linetype = "AFPS3")) +
   labs(
     title = "AFPS Over Depth (SENTEK1)",
     x = "AFPS (mm)",
@@ -197,8 +205,8 @@ ggplot(SENTEK_season, aes(x = AFPS1, y = -depth, color = Season, linetype = "AFP
   ) +
   scale_color_manual(
     values = custom_colors,
-    breaks = c(1, 2, 3, 4),
-    labels = c("JFM", "AMJ", "JAS", "OND")
+    breaks = c("Spring", "Summer", "Autumn", "Winter"),
+    labels = c("Spring", "Summer", "Autumn", "Winter")
   ) +
   scale_linetype_manual(
     values = c(AFPS1 = "solid", AFPS3 = "dotdash"),
@@ -222,6 +230,18 @@ ggplot(TENSIO_season, aes(x = -depth, y = AFPS2, color = Season)) +
     labels = c("JFM", "AMJ", "JAS", "OND")
   ) +
   theme_minimal()
+
+#MONTH
+ggplot(SENTEK_month, aes(x = -depth, y = AFPS1/100, color = month)) +
+  geom_path(aes(x = AFPS1/100, y = -depth, color = month)) +
+  labs(
+    title = "AFPS Over Depth (SENTEK3)",
+    x = "AFPS (mm)",
+    y = "Depth (cm)") +
+  scale_color_viridis_d(option = "turbo") +
+  theme_minimal()
+
+
 
 
 write_rds(SENTEK_profile1_month, "App/Langeweide_SENTEK1_profile.rds")
