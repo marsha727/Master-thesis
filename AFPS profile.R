@@ -62,6 +62,7 @@ SENTEK_profile3 <- SENTEK_long3 %>%
   arrange(date, depth) %>% 
   group_by(date)
 
+#Make sure the dates are overlapping for study period
 SENTEK_profile1 <- SENTEK_profile1 %>% 
   filter(date >= "2022-04-02" & date <= "2022-11-01")
 
@@ -89,41 +90,19 @@ SENTEK_profile3_month <- SENTEK_profile3 %>%
   summarise(AFPS = mean(value, na.rm = TRUE)) %>% 
   rename(AFPS3 = AFPS)
 
+#bind into one dataframe
+SENTEK_month <- cbind(SENTEK_profile1_month, SENTEK_profile3_month[,3], GWL_month[])
+
 GWL_month <- GWL %>% 
   mutate(month = as.character(month(datetime))) %>% 
   group_by(month) %>% 
   summarise(GWL = mean(GWL_mean, na.rm = TRUE))
 
-SENTEK_month <- cbind(SENTEK_profile1_month, SENTEK_profile3_month[,3])
-  
 TENSIO_month <- TENSIO_real %>% 
   group_by(depth, month = format(datetime, "%m")) %>% 
   summarise(AFPS2 = mean(AFPS2), AFPS3 = mean(AFPS3))
 
-  
-ggplot(SENTEK_profile3_month, aes(x = -depth, y = AFPS/100, color = month)) +
-  geom_point() +
-  labs(
-    title = "AFPS Over Depth (SENTEK3)",
-       x = "Depth (cm)",
-       y = "AFPS (mm)") +
-  scale_color_viridis_c(option = "turbo") +
-  theme_minimal()
-
-#with monotonic polynominal plotting line
-ggplot(TENSIO_month, aes(x = -depth, y = AFPS3, color = month)) +
-  #geom_line()+
-  #geom_smooth(method = "gam", formula = y ~ s(x, k = 3, bs = "cr", m = 1), se = FALSE) +
-  geom_smooth(method = "lm", formula = y ~ poly(x, 2), se = FALSE) +
-  labs(
-    title = "AFPS over depth (TENSIO2)",
-    x = "Depth (cm)",
-    y = "AFPS (mm)"
-  ) +
-  scale_color_viridis_d(option = "turbo") +
-  theme_minimal()
-
-#seasonal
+#seasonal averages !!!!be careful with interpetation
 
 SENTEK_profile1_season <- SENTEK_profile1 %>% 
   na.omit(date) %>% 
@@ -160,6 +139,10 @@ TENSIO_season <- TENSIO_real %>%
   summarise(AFPS2 = mean(AFPS2, na.rm = T), AFPS3 = mean(AFPS3, na.rm = T))
 
 
+
+#PLOTTING
+
+#seasonal
 
 custom_colors <- c("royalblue", "gold", "lawngreen", "tomato")
 
@@ -231,16 +214,47 @@ ggplot(TENSIO_season, aes(x = -depth, y = AFPS2, color = Season)) +
   ) +
   theme_minimal()
 
+
+# Your months data in the GWL_month data frame
+months_data <- as.numeric(GWL_month$month)
+
+# Min-Max normalization function for months
+normalize_months <- function(x) {
+  (x - min(x)) / (max(x) - min(x)) * 0.4
+}
+
+# Applying normalization to the months data in the GWL_month data frame
+GWL_month$normalized_month <- normalize_months(months_data)
+
+
 #MONTH
-ggplot(SENTEK_month, aes(x = -depth, y = AFPS1/100, color = month)) +
-  geom_path(aes(x = AFPS1/100, y = -depth, color = month)) +
+ggplot() +
+  geom_path(data = SENTEK_month, aes(x = AFPS1/100, y = -depth, color = month, linetype = "AFPS1")) +
+  geom_path(data = SENTEK_month, aes(x = AFPS3/100, y = -depth, color = month, linetype = "AFPS3")) +
+  geom_point(data = GWL_month, aes(x = as.numeric(normalized_month), y = GWL, color = month), shape = "GWL" ) +
   labs(
     title = "AFPS Over Depth (SENTEK3)",
-    x = "AFPS (mm)",
-    y = "Depth (cm)") +
-  scale_color_viridis_d(option = "turbo") +
+    x = "AFPS (mm)",  
+    y = "Depth (cm)",
+    linetype = "Probe"
+  ) +
+  scale_color_manual(
+    values = c("#440154", "#3B528B", "#21918C", "#5EC962", "#FDE725", "#FFAC00", "#D73027", "black"),
+    breaks = c(4, 5, 6, 7, 8, 9, 10),
+    labels = c("Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct")
+  ) +
+  scale_linetype_manual(
+    values = c(AFPS1 = "solid", AFPS3 = "dotdash"),
+    breaks = c("AFPS1", "AFPS3"),
+    labels = c("AFPS1", "AFPS3")
+  ) +
+  scale_shape_manual(
+    values = c(GWL = "GWL"),  # Adjust shape as needed
+    breaks = "GWL",
+    labels = "GWL"
+  ) +
+  #scale_color_viridis_d(option = "turbo") +
   theme_minimal()
-
 
 
 
@@ -249,4 +263,11 @@ write_rds(SENTEK_profile3_month, "App/Langeweide_SENTEK3_profile.rds")
 write_rds(TENSIO_month, "App/Langeweide_TENSIO_profile.rds")
 
 test <- readRDS("App/Langeweide_SENTEK1_profile.rds")
+
+
+merged <- merge(SENTEK_month, GWL_month, by = "month", all.x = TRUE)
+
+
+
+
 
