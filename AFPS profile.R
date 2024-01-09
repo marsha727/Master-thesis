@@ -269,8 +269,7 @@ ggplot() +
     linetype = "Probe",
   ) +
   scale_color_manual(
-    values = c("#440154", "#3B528B", "#21918C", "#5EC962", "#FDE725", "#FFAC00", "#D73027", "black
-               "),
+    values = c("#440154", "#3B528B", "#21918C", "#5EC962", "#FDE725", "#FFAC00", "#D73027", "black"),
     breaks = c(04, 05, 06, 07, 08, 09, 10),
     labels = c("Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct")
   ) +
@@ -282,16 +281,6 @@ ggplot() +
   #scale_color_viridis_d(option = "turbo") +
   theme_minimal()
 
-
-
-write_rds(SENTEK_profile1_month, "App/Langeweide_SENTEK1_profile.rds")
-write_rds(SENTEK_profile3_month, "App/Langeweide_SENTEK3_profile.rds")
-write_rds(TENSIO_month, "App/Langeweide_TENSIO_profile.rds")
-
-test <- readRDS("App/Langeweide_SENTEK1_profile.rds")
-
-
-merged <- merge(SENTEK_month, GWL_month, by = "month", all.x = TRUE)
 
 
 
