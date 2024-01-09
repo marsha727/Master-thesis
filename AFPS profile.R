@@ -70,10 +70,10 @@ SENTEK_profile3 <- SENTEK_profile3 %>%
   filter(date >= "2022-04-02" & date <= "2022-11-01")
 
 TENSIO_real <- TENSIO_real %>% 
-  filter(datetime >= "2022-04-02" & datetime <= "2022-11-01")
+  filter(datetime >= "2022-04-02" & datetime <= "2022-10-31")
 
 GWL <- GWL %>% 
-  filter(datetime >= "2022-04-02" & datetime <= "2022-11-01")
+  filter(datetime >= "2022-04-02" & datetime <= "2022-10-31")
 
 #calculate an average over each month
 SENTEK_profile1_month <- SENTEK_profile1 %>% 
@@ -99,7 +99,7 @@ GWL_month <- GWL %>%
   summarise(GWL = mean(GWL_mean, na.rm = TRUE))
 
 TENSIO_month <- TENSIO_real %>% 
-  group_by(depth, month = format(datetime, "%m")) %>% 
+  group_by(depth, month = as.character(month(datetime))) %>% 
   summarise(AFPS2 = mean(AFPS2), AFPS3 = mean(AFPS3))
 
 #seasonal averages !!!!be careful with interpetation
@@ -223,20 +223,26 @@ normalize_months <- function(x) {
   (x - min(x)) / (max(x) - min(x)) * 0.4
 }
 
+normalize_months_T <- function(x) {
+  (x - min(x)) / (max(x) - min(x)) * 0.94
+}
+
 # Applying normalization to the months data in the GWL_month data frame
 GWL_month$normalized_month <- normalize_months(months_data)
+GWL_month$normalized_month_T <- normalize_months_T(months_data)
 
 
 #MONTH
 ggplot() +
   geom_path(data = SENTEK_month, aes(x = AFPS1/100, y = -depth, color = month, linetype = "AFPS1")) +
   geom_path(data = SENTEK_month, aes(x = AFPS3/100, y = -depth, color = month, linetype = "AFPS3")) +
-  geom_point(data = GWL_month, aes(x = as.numeric(normalized_month), y = GWL, color = month), shape = "GWL" ) +
-  labs(
-    title = "AFPS Over Depth (SENTEK3)",
+  geom_point(data = GWL_month, aes(x = as.numeric(normalized_month), y = GWL, color = month), shape = 16 ) +
+  geom_text(data = GWL_month, aes(x = as.numeric(normalized_month), y = GWL, label = "GWL"), vjust = -0.5, size = 2) +
+labs(
+    title = "AFPS Over Depth compared to GWL",
     x = "AFPS (mm)",  
     y = "Depth (cm)",
-    linetype = "Probe"
+    linetype = "Probe",
   ) +
   scale_color_manual(
     values = c("#440154", "#3B528B", "#21918C", "#5EC962", "#FDE725", "#FFAC00", "#D73027", "black"),
@@ -248,10 +254,30 @@ ggplot() +
     breaks = c("AFPS1", "AFPS3"),
     labels = c("AFPS1", "AFPS3")
   ) +
-  scale_shape_manual(
-    values = c(GWL = "GWL"),  # Adjust shape as needed
-    breaks = "GWL",
-    labels = "GWL"
+  #scale_color_viridis_d(option = "turbo") +
+  theme_minimal()
+
+ggplot() +
+  geom_path(data = TENSIO_month, aes(x = AFPS2, y = -depth, color = month, linetype = "AFPS2")) +
+  geom_path(data = TENSIO_month, aes(x = AFPS3, y = -depth, color = month, linetype = "AFPS3")) +
+  geom_point(data = GWL_month, aes(x = as.numeric(normalized_month_T), y = GWL, color = month), shape = 16 ) +
+  geom_text(data = GWL_month, aes(x = as.numeric(normalized_month_T), y = GWL, label = "GWL"), vjust = -0.5, size = 2) +
+  labs(
+    title = "AFPS Over Depth compared to GWL",
+    x = "AFPS (mm)",  
+    y = "Depth (cm)",
+    linetype = "Probe",
+  ) +
+  scale_color_manual(
+    values = c("#440154", "#3B528B", "#21918C", "#5EC962", "#FDE725", "#FFAC00", "#D73027", "black
+               "),
+    breaks = c(04, 05, 06, 07, 08, 09, 10),
+    labels = c("Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct")
+  ) +
+  scale_linetype_manual(
+    values = c(AFPS2 = "solid", AFPS3 = "dotdash"),
+    breaks = c("AFPS2", "AFPS3"),
+    labels = c("AFPS2", "AFPS3")
   ) +
   #scale_color_viridis_d(option = "turbo") +
   theme_minimal()
