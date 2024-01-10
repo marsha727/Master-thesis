@@ -171,8 +171,10 @@ ET_d$datetime <- format(ET_d$datetime, "%Y-%m-%d")
 write.csv2(ET_d, file = "Transformed/ET_langeweide.csv")
 
 write_rds(ET_d, file = "App/Langeweide_ET.rds")
+write_rds(ET_d, file = "App/Langeweide_ET_noWindCor.rds")
 
 test.read <- read.csv2("Transformed/ET_langeweide.csv")
+test <- readRDS("App/Langeweide_ET_noWindCor.rds")
 
 
 
