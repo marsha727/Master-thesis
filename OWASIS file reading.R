@@ -35,7 +35,7 @@ pPolders <- vect(pathPolders)
 #empty list
 lTowi <- list()
 #create a sequence of dates
-lDay <- seq.Date(as.Date("2022-04-02","%Y-%m-%d"),as.Date("2022-11-01","%Y-%m-%d"),by = "1 day")
+lDay <- seq.Date(as.Date("2020-01-01","%Y-%m-%d"),as.Date("2023-12-31","%Y-%m-%d"),by = "1 day")
 #A new data frame with day as variable
 df.owasis <- data.frame(day=lDay)
 
