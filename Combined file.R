@@ -2,7 +2,9 @@
 library(tidyverse)
 
 ET <- readRDS("App/Langeweide_ET_noWindCor.rds")
+ET_halfhour <- readRDS("App/Langeweide_ET_halfhour.rds")
 AFPS <- readRDS("App/AFPS_int_TS.rds")
+AFPS_halfhour <- readRDS("App/AFPS_int_TS_halfhour.rds")
 Langeweide_data <- readRDS("Datasets/LAW_MS_ICOS.RDS")
 WL <- readRDS("Transformed/Langeweide_groundwater.rds")
 
@@ -15,6 +17,11 @@ ET <- ET %>%
   filter(datetime >= start_date & datetime <= end_date) %>% 
   rename(datetime2 = datetime)
 
+ET_halfhour <- ET_halfhour %>% 
+  filter(datetime >= "2022-04-02 01:00:00" & datetime <= "2022-10-31 23:30:00") %>% 
+  rename(datetime2 = datetime)
+  
+#Aggregation per day (inclusion of OWASIS)
 WL <- WL %>% 
   group_by(datetime = format(datetime, "%Y-%m-%d")) %>% 
   summarise(WL = mean(GWL_mean, na.rm = TRUE)) %>% 
@@ -41,8 +48,6 @@ NEE <- Langeweide_data %>%
   filter(datetime >= start_date & datetime <= end_date) %>% 
   rename(datetime5 = datetime)
 
-  
-
 Langeweide <- cbind(AFPS, WL, ET, Tsoil, NEE) 
 
 Langeweide <- Langeweide %>% 
@@ -51,6 +56,30 @@ Langeweide <- Langeweide %>%
 write_rds(Langeweide, "App/Langeweide_full.rds")
 
 test <- readRDS("App/Langeweide_full.rds")
+
+#Halfhourly file
+#Aggregation per day (inclusion of OWASIS)
+WL_halfhour <- WL %>% 
+  filter(datetime >= "2022-04-02 01:00:00" & datetime <= "2022-10-31 23:30:00") %>% 
+  rename(datetime3 = datetime)
+
+Tsoil <- Langeweide_data %>% 
+  select(datetime, Tsoil_1_005, Tsoil_1_015, Tsoil_1_025, Tsoil_1_035,
+         Tsoil_1_045, Tsoil_1_055, Tsoil_1_065, Tsoil_1_075, Tsoil_1_085,
+         Tsoil_1_095, Tsoil_1_105, Tsoil_3_005, Tsoil_3_015, Tsoil_3_025, Tsoil_3_035,
+         Tsoil_3_045, Tsoil_3_055, Tsoil_3_065, Tsoil_3_075, Tsoil_3_085,
+         Tsoil_3_095, Tsoil_3_105) %>% 
+  filter(datetime >= start_date & datetime <= end_date) %>% 
+  rename(datetime4 = datetime)
+
+NEE <- Langeweide_data %>% 
+  select(datetime, NEE_CO2_MDS2, NEE_CO2_MDS, NEE_CO2) %>% 
+  group_by(datetime = format(datetime, "%Y-%m-%d")) %>% 
+  summarise(NEE_CO2_MDS2 = sum(NEE_CO2_MDS2, na.rm = TRUE),
+            NEE_CO2_MDS = sum(NEE_CO2_MDS, na.rm = TRUE),
+            NEE_CO2 = sum(NEE_CO2, na.rm = TRUE)) %>% 
+  filter(datetime >= start_date & datetime <= end_date) %>% 
+  rename(datetime5 = datetime)
 
 ggplot(Langeweide) +
   geom_point(aes(x = Tair, y = NEE_CO2_MDS2, color = WL)) +
