@@ -1,7 +1,7 @@
 #hello
 library(tidyverse)
 
-ET <- readRDS("App/Langeweide_ET.rds")
+ET <- readRDS("App/Langeweide_ET_noWindCor.rds")
 AFPS <- readRDS("App/AFPS_int_TS.rds")
 Langeweide_data <- readRDS("Datasets/LAW_MS_ICOS.RDS")
 WL <- readRDS("Transformed/Langeweide_groundwater.rds")
@@ -96,5 +96,37 @@ ggplot(Langeweide) +
   )
 
 
+ggplot(Langeweide) +
+  geom_point(aes(x = SENTEK1, y = NEE_CO2_MDS2, shape = "SENTEK1", color = Tair)) +
+  geom_point(aes(x = SENTEK3, y = NEE_CO2_MDS2, shape = "SENTEK3", color = Tair)) +
+  geom_point(aes(x = TENSIO2, y = NEE_CO2_MDS2, shape = "TENSIO2", color = Tair)) +
+  geom_point(aes(x = TENSIO3, y = NEE_CO2_MDS2, shape = "TENSIO3", color = Tair)) +
+  geom_point(aes(x = OWASIS, y = NEE_CO2_MDS2, shape = "OWASIS", color = Tair)) +
+  scale_shape_manual(values = c(16, 17, 25, 15, 22)) +
+  scale_color_viridis(option = "turbo", trans = "reverse") +
+  labs(
+    x = "AFPS [mm]",
+    y = "NEE CO2 [kg day-1 ha-1]"
+  ) +
+  theme(
+    panel.border = element_rect(color = "black", fill = NA, size = 1),
+    panel.background = element_rect(fill = "white", color = "black")
+  )
 
+ggplot(Langeweide) +
+  geom_point(aes(x = SENTEK1, y = NEE_CO2_MDS2, shape = "SENTEK1", color = EF3)) +
+  geom_point(aes(x = SENTEK3, y = NEE_CO2_MDS2, shape = "SENTEK3", color = EF3)) +
+  geom_point(aes(x = TENSIO2, y = NEE_CO2_MDS2, shape = "TENSIO2", color = EF3)) +
+  geom_point(aes(x = TENSIO3, y = NEE_CO2_MDS2, shape = "TENSIO3", color = EF3)) +
+  geom_point(aes(x = OWASIS, y = NEE_CO2_MDS2, shape = "OWASIS", color = EF3)) +
+  scale_shape_manual(values = c(16, 17, 25, 15, 22)) +
+  scale_color_viridis(option = "turbo", trans = "reverse") +
+  labs(
+    x = "AFPS [mm]",
+    y = "NEE CO2 [kg day-1 ha-1]"
+  ) +
+  theme(
+    panel.border = element_rect(color = "black", fill = NA, size = 1),
+    panel.background = element_rect(fill = "white", color = "black")
+  )
 
