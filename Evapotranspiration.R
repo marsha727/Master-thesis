@@ -104,6 +104,9 @@ ET_d <- ET %>%
 ET_neg <- ET_d %>% 
   filter(ET < 0)
 
+ET_neg2 <- ET %>% 
+  filter(ET < 0)
+
 #test if these high RH are also present in other RH measurements
 {Sat_dates <- ET_neg %>% 
   select(datetime)
@@ -127,13 +130,14 @@ RH_measurements_neg <- RH_measurements_d %>%
 }
 
 #lets test for Tair = Tdew conditions and P > 0 conditions
-RH_check <- ET_neg %>% 
+RH_check <- ET_neg2 %>% 
   filter(RH > 95) %>% 
   filter(abs(Tdew_EP - Tair) > 1 | RAIN > 0) 
 
-matching_row <- which(ET_d$datetime %in% RH_check$datetime) 
+matching_row <- which(ET$datetime %in% RH_check$datetime) 
 
 ET_d[matching_row, "ET"] <- NA
+ET[matching_row, "ET"] <- NA
 
 #filter for wind conditions that are from SW (least water influence)
 ET_wind <- ET_d %>% 
@@ -167,6 +171,8 @@ ET_d$datetime <- as.POSIXct(ET_d$datetime, format = "%Y-%m-%d")
 #format for writing
 ET_d$datetime <- format(ET_d$datetime, "%Y-%m-%d")
 
+write_rds(ET, file = "App/Langeweide_ET_halfhour.rds")
+
 #file writing
 write.csv2(ET_d, file = "Transformed/ET_langeweide.csv")
 
@@ -174,7 +180,7 @@ write_rds(ET_d, file = "App/Langeweide_ET.rds")
 write_rds(ET_d, file = "App/Langeweide_ET_noWindCor.rds")
 
 test.read <- read.csv2("Transformed/ET_langeweide.csv")
-test <- readRDS("App/Langeweide_ET_noWindCor.rds")
+test <- readRDS("App/Langeweide_ET_halfhour.rds")
 
 
 
