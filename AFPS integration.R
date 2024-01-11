@@ -5,12 +5,14 @@ AFPS_TENSIO <- read.csv2("Transformed/Langeweide_tensio_interpolated.csv")
 OWASIS_BBB <- read.csv2("Transformed/Langeweide_OWASIS_BBB.csv")
 Langeweide_data <- readRDS("Datasets/LAW_MS_ICOS.RDS")
 ET <- readRDS("App/Langeweide_ET.rds")
+ET_halfhour <- readRDS("App/Langeweide_ET_halfhour.rds")
 
 AFPS_SENTEK$datetime <- as.POSIXct(AFPS_SENTEK$datetime, format = "%Y-%m-%d %H:%M:%S")
 AFPS_TENSIO$TIMESTAMP <- as.POSIXct(AFPS_TENSIO$datetime, format = "%Y-%m-%d %H:%M:%S")
 OWASIS_BBB$Date <- as.POSIXct(OWASIS_BBB$Date, format = "%Y-%m-%d")
 Langeweide_data$datetime <- as.POSIXct(Langeweide_data$datetime, format = "%Y-%m-%d %H:%M:%S")
 ET$datetime <- as.POSIXct(ET$datetime, format = "%Y-%m-%d")
+ET_halfhour$datetime <- as.POSIXct(ET_halfhour$datetime, format = "%Y-%m-%d")
 
 #Fist check max depth of OWASIS_BBB in cm
 Max_GW_OWASIS <- abs(min(OWASIS_BBB$MedianGW_mmv)*100)
@@ -36,7 +38,7 @@ end_date3 <- "2022-10-31"
 
 #filter for the dates
 AFPS_int_SENTEK <- AFPS_int_SENTEK %>% 
-  filter(datetime >= start_date & datetime <= end_date3)
+  filter(datetime >= start_date & datetime <= end_date2)
 
 AFPS_int_TENSIO <- AFPS_int_TENSIO %>% 
   filter(datetime >= start_date & datetime <= end_date2)
@@ -55,6 +57,9 @@ OWASIS_BBB <- OWASIS_BBB %>%
 
 ET <- ET %>% 
   filter(datetime >= start_date & datetime <= end_date3)
+
+ET_halfhour <- ET_halfhour %>% 
+  filter(datetime >= "2022-04-02 01:00:00" & datetime <= "2022-10-31 23:30:00")
 
 #make subselection of langeweide before using
 Langeweide_data <- Langeweide_data %>% 
@@ -80,19 +85,24 @@ AFPS_int_SENTEK$datetime <- as.POSIXct(AFPS_int_SENTEK$datetime, format = "%Y-%m
 
 #Combined AFPS TENSIO AND SENTEK
 AFPS_int_TS <- bind_cols(AFPS_int_SENTEK[1], AFPS_int_SENTEK[ ,27:28], AFPS_int_TENSIO[ ,2:3], OWASIS_BBB[4])
+AFPS_int_TS_halfhour <- bind_cols(AFPS_int_SENTEK[1], AFPS_int_SENTEK[ ,27:28], AFPS_int_TENSIO[ ,2:3])
 
 #correct datetime format
 AFPS_int_TS$datetime <- as.POSIXct(AFPS_int_TS$datetime, format = "%Y-%m-%d")
 
 AFPS_int_TS <- AFPS_int_TS %>% 
   rename(SENTEK1 = Probe1, SENTEK3 = Probe3, TENSIO2 = AFPS2, TENSIO3 = AFPS3, OWASIS = MedianBBB)
+AFPS_int_TS_halfhour <- AFPS_int_TS_halfhour %>% 
+  rename(SENTEK1 = Probe1, SENTEK3 = Probe3, TENSIO2 = AFPS2, TENSIO3 = AFPS3)
 
-Langeweide <- Langeweide_data %>% 
-  select(day, )
+
 
 
 #write file for App
 write_rds(AFPS_int_TS, file = "App/AFPS_int_TS.rds")
+write_rds(AFPS_int_TS_halfhour, file = "App/AFPS_int_TS_halfhour.rds")
+
+test <- readRDS("App/AFPS_int_TS_halfhour.rds")
 
 #PLOTTING
 
