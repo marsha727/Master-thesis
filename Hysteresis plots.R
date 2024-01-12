@@ -13,7 +13,7 @@ AFPS_int_TS$month_name <- month(AFPS_int_TS$datetime)
 
 # Plot the graph
 p <- ggplot(AFPS_int_TS) +
-  geom_path(aes(x = TENSIO3, y = SENTEK3, color = month_name), size = 1.5) +
+  geom_path(aes(x = TENSIO3, y = SENTEK3, color = month_name), linewidth = 1.5) +
   labs(
     title = "Hysteresis drying and wetting cycles",
     x = "TENSIO AFPS (mm)",
