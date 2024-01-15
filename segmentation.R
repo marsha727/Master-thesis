@@ -9,7 +9,7 @@ AFPS_int_TS <- read_rds("App/AFPS_int_TS.rds")
 
 columns <- c("SENTEK1", "SENTEK3", "TENSIO2", "TENSIO3")
 
-peak_T3 <- findpeaks(AFPS_int_TS$TENSIO3, minpeakheight = 17)
+peak_T3 <- findpeaks(AFPS_int_TS$TENSIO3, minpeakheight = 17, minpeakdistance = 4)
 print(peak_T3)
 
 extracted_peaks <- lapply(1:nrow(peak_T3), function(i){
@@ -97,4 +97,6 @@ correlation_plot + stat_correlation(mapping = use_label(c("R", "P")),
                                     label.x = "left", 
                                     label.y = "top"
                                     )
+
+
 
