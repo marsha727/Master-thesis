@@ -38,7 +38,7 @@ Langeweide_night <- Langeweide_night[complete.cases(Langeweide_night$SENTEK1), ]
             RAIN = sum(RAIN, na.rm = TRUE),
             NEE_CO2_MDS2 = sum(NEE_CO2_MDS2, na.rm = TRUE)
   ) %>% 
-  select(-c(datetime))
+  select(-c(datetime, SENTEK3, TENSIO2, TENSIO3))
 
 cycle4 <- Langeweide_night %>% 
   filter(datetime >= "2022-08-19" & datetime <= "2022-09-07") %>% 
@@ -55,7 +55,7 @@ Langeweide_PCA <- na.omit(Langeweide_PCA)
 Langeweide_PCA <- na.omit(Langeweide_night)
 Langeweide_PCA <- na.omit(cycle3)
 
-pca_result <- prcomp(Langeweide_PCA, scale = TRUE)
+pca_result <- prcomp(Langeweide, scale = TRUE)
 
 names(pca_result)
 
@@ -75,7 +75,7 @@ biplot(pca_result, scale = 0)
 plot(pca_result$sdev^2, type = "b", pch = 16, main = "Scree Plot", xlab = "Principal Component", ylab = "Variance Explained")
 
 
-nb <- estim_ncpPCA(Langeweide_night, scale = TRUE)
+nb <- estim_ncpPCA(Langeweide, scale = TRUE)
 
 comp <- imputePCA(Langeweide_missing, ncp = 5, scale = TRUE)
 
@@ -85,5 +85,14 @@ pca_result_fill$rotation <- -pca_result_fill$rotation
 pca_result_fill$rotation
 
 biplot(pca_result_fill, scale = 0)
+
+
+
+
+numeric_columns <- sapply(LAW_MS_ICOS, is.numeric)
+
+# Remove numeric columns
+Langeweide <- LAW_MS_ICOS[, numeric_columns]
+str
 
 
