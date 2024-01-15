@@ -40,11 +40,20 @@ Langeweide_night <- Langeweide_night[complete.cases(Langeweide_night$SENTEK1), ]
   ) %>% 
   select(-c(datetime))
 
+cycle4 <- Langeweide_night %>% 
+  filter(datetime >= "2022-08-19" & datetime <= "2022-09-07") %>% 
+  select(-c(datetime))
+
+cycle3 <- Langeweide_night %>% 
+  filter(datetime >= "2022-08-01" & datetime <= "2022-08-18") %>% 
+  select(-c(datetime))
+
 
 
 
 Langeweide_PCA <- na.omit(Langeweide_PCA)
 Langeweide_PCA <- na.omit(Langeweide_night)
+Langeweide_PCA <- na.omit(cycle3)
 
 pca_result <- prcomp(Langeweide_PCA, scale = TRUE)
 
