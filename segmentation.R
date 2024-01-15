@@ -98,5 +98,12 @@ correlation_plot + stat_correlation(mapping = use_label(c("R", "P")),
                                     label.y = "top"
                                     )
 
+ggplot(extracted_peaks_TS) +
+  geom_point(aes(x = datetime, y = SENTEK1, color = factor(cycle_number))) +
+  geom_point(aes(x = datetime, y = TENSIO2, color = factor(cycle_number))) +
+  scale_color_manual(values = c("1" = "red", "2" = "blue", "3" = "green", "4" = "orange", "5" = "purple")) +
+  # You can customize colors as needed
+  labs(color = "Cycle Number") +
+  theme_minimal()
 
 
