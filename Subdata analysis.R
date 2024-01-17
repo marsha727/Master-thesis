@@ -413,3 +413,23 @@ correlation_plot + stat_correlation(mapping = use_label(c("R", "P")),
                                     label.x = "right", 
                                     label.y = "bottom"
 )
+
+# Create a scatter plot with a single correlation coefficient for each cycle
+correlation_plot <- ggplot(extracted, aes(x = GWL, y = NEE_CO2_MDS_small)) +
+  stat_smooth(method = "glm", col = "red", span = 5) +
+  geom_point() +
+  labs(
+    x = "AFPS [mm]",
+    y = "NEE CO2 [kg day-1 ha-1]"
+  )
+geom_text(data = correlation_data, aes(x = Inf, y = -Inf, label = sprintf("R = %.2f", correlation)), vjust = 1, hjust = 1, size = 3)
+
+library(ggpmisc)
+
+#stat correlation for plotting and computing stats
+correlation_plot + stat_correlation(mapping = use_label(c("R", "P")),
+                                    method = "spearman",
+                                    size = 4, 
+                                    label.x = "right", 
+                                    label.y = "bottom"
+)
