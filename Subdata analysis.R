@@ -213,7 +213,7 @@ correlation_data <- extracted_TS %>%
 
 # Create a scatter plot with a single correlation coefficient for each cycle
 correlation_plot <- ggplot(extracted_TS, aes(x = SWC_1_015, y = NEE_CO2_MDS_small)) +
-  stat_smooth(method = "loess", col = "red", span = 0.75) +
+  stat_smooth(method = "lm", col = "red", span = 0.75) +
   geom_point() +
   labs(
     x = "AFPS [mm] (Depth = 15 cm) ",
@@ -225,7 +225,7 @@ library(ggpmisc)
 
 #stat correlation for plotting and computing stats
 correlation_plot + stat_correlation(mapping = use_label(c("R", "P")),
-                                    method = "spearman",
+                                    method = "pearson",
                                     size = 4, 
                                     label.x = "right", 
                                     label.y = "bottom"
