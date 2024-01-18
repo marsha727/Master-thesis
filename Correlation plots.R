@@ -91,3 +91,56 @@ ggplot(AFPS_int_TS_n) +
 
 
 
+M <- cor(extracted_peaks_TS[, 2:6], method = "spearman", use = "pairwise.complete.obs")
+
+# Set both diagonal and upper triangular part to NA
+M[upper.tri(M)] <- NA
+diag(M) <- NA
+
+library(reshape2)
+melted_M <- melt(M, na.rm = TRUE)
+
+library(ggplot2)
+ggplot(melted_M, aes(Var1, Var2, fill = value)) +
+  geom_tile() +
+  geom_text(aes(label = ifelse(is.na(value), "", round(value, 2))), vjust = 1) +
+  scale_fill_gradient2(low = "blue", mid = "white", high = "red", limits = c(-1, 1)) +
+  theme_minimal() +
+  labs(title = "Spearman Rank Correlation Heatmap")
+
+extracted_peaks_TS <- extracted_peaks_TS %>%
+  mutate(cycle = case_when(
+    cycle_number == 1 ~ 3,
+    cycle_number == 3 ~ 1,
+    cycle_number == 4 ~ 4,
+    cycle_number == 5 ~ 4,
+    TRUE ~ cycle_number  # Keep the original value if none of the conditions are met
+  ))
+
+
+subset_list <- extracted_peaks_TS %>%
+  group_split(cycle)
+
+# Calculate correlation matrices for each subset
+cor_matrices <- lapply(subset_list, function(subset_data) {
+  cor_matrix <- cor(subset_data[, 2:6], method = "spearman", use = "pairwise.complete.obs")
+  M <- cor_matrix
+  M[upper.tri(M)] <- NA
+  diag(M) <- NA
+  melt(M, na.rm = TRUE)
+})
+
+# Create separate heatmaps for each cycle
+heatmap_plots <- lapply(seq_along(cor_matrices), function(i) {
+  ggplot(cor_matrices[[i]], aes(Var1, Var2, fill = value)) +
+    geom_tile() +
+    geom_text(aes(label = ifelse(is.na(value), "", round(value, 2))), vjust = 1) +
+    scale_fill_gradient2(low = "blue", mid = "white", high = "red", limits = c(-1, 1)) +
+    theme_minimal() +
+    labs(title = paste("Cycle", as.numeric(names(cor_matrices)[i])))
+})
+
+library(gridExtra)
+grid.arrange(grobs = heatmap_plots, ncol = 3)
+
+
