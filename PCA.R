@@ -38,7 +38,7 @@ Langeweide_night <- Langeweide_night[complete.cases(Langeweide_night$SENTEK1), ]
             RAIN = sum(RAIN, na.rm = TRUE),
             NEE_CO2_MDS2 = sum(NEE_CO2_MDS2, na.rm = TRUE)
   ) %>% 
-  select(-c(datetime, SENTEK3, TENSIO2, TENSIO3))
+  select(-c(datetime, OWASIS))
 
 cycle4 <- Langeweide_night %>% 
   filter(datetime >= "2022-08-19" & datetime <= "2022-09-07") %>% 
@@ -48,14 +48,31 @@ cycle3 <- Langeweide_night %>%
   filter(datetime >= "2022-08-01" & datetime <= "2022-08-18") %>% 
   select(-c(datetime))
 
+AFPS_NEE_WL_Tair <- readRDS("Datasets/Extracted/AFPS_NEE_WL_Tair.rds")
+
+extracted <- AFPS_NEE_WL_Tair[[1]]$df
+
+extracted <- extracted %>% 
+  rename(SENTEK1 = y.LAW_MS_ICOS.SENTEK1.mean,
+         SENTEK3 = y.LAW_MS_ICOS.SENTEK3.mean,
+         TENSIO2 = y.LAW_MS_ICOS.TENSIO2.mean,
+         TENSIO3 = y.LAW_MS_ICOS.TENSIO3.mean,
+         OWASIS = y.LAW_MS_ICOS.OWASIS.mean,
+         NEE_CO2_MDS_small = w.LAW_MS_ICOS.NEE_CO2_MDS_small.mean,
+         GPP = v.LAW_MS_ICOS.GPP.mean,
+         GWL = x.LAW_MS_ICOS.GWL_mean.mean,
+         Tair = u.LAW_MS_ICOS.Tair_f.mean) %>% 
+  select(-c(datetime, week, month, season.meteo, season.year))
+
 
 
 
 Langeweide_PCA <- na.omit(Langeweide_PCA)
 Langeweide_PCA <- na.omit(Langeweide_night)
 Langeweide_PCA <- na.omit(cycle3)
+Langeweide_PCA <- na.omit(extracted)
 
-pca_result <- prcomp(Langeweide, scale = TRUE)
+pca_result <- prcomp(Langeweide_PCA, scale = TRUE)
 
 names(pca_result)
 
@@ -67,7 +84,7 @@ pca_result$rotation
 pca_result$rotation <- -pca_result$rotation
 pca_result$rotation
 
-pca_result$x <- -pca_result$x
+sumpca_result$x <- -pca_result$x
 head(pca_result$x)
 
 biplot(pca_result, scale = 0)
