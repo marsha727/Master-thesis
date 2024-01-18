@@ -107,3 +107,18 @@ ggplot(extracted_peaks_TS) +
   theme_minimal()
 
 
+correlation_data <- extracted_peaks_TS %>%
+  group_by() %>%
+  summarise(correlation = cor(SENTEK1, TENSIO2, method = "spearman"))
+# Create a scatter plot with a single correlation coefficient for each cycle
+correlation_plot <- ggplot(extracted_peaks_TS, aes(x = SENTEK1, y = TENSIO2)) +
+  stat_smooth(method = "lm", col = "red") +
+  geom_point() +
+  geom_text(data = correlation_data, aes(x = Inf, y = -Inf, label = sprintf("R = %.2f", correlation)), vjust = 1, hjust = 1, size = 3)
+
+#stat correlation for plotting and computing stats
+correlation_plot + stat_correlation(mapping = use_label(c("R", "P")), 
+                                    size = 4, 
+                                    label.x = "left", 
+                                    label.y = "top"
+)
