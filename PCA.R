@@ -103,13 +103,14 @@ pca_result_fill$rotation
 
 biplot(pca_result_fill, scale = 0)
 
+eigenvalues <- pca_result$sdev^2
+
+cumulative_variance <- cumsum(eigenvalues) / sum(eigenvalues)
+print(cumulative_variance)
+
+# Print or inspect the eigenvalues
+print(eigenvalues)
 
 
-
-numeric_columns <- sapply(LAW_MS_ICOS, is.numeric)
-
-# Remove numeric columns
-Langeweide <- LAW_MS_ICOS[, numeric_columns]
-str
 
 
