@@ -4,6 +4,7 @@ library(mixKernel)
 
 LAW_ICOS <- readRDS("Langeweide/LAW_MS_ICOS.rds")
 AFPS_NEE_WL_Tair <- readRDS("Datasets/Extracted/AFPS_NEE_WL_Tair.rds")
+PCA_set <- readRDS("Langeweide/Statistics_file.rds")
 
 extracted <- AFPS_NEE_WL_Tair[[1]]$df
 
@@ -19,6 +20,7 @@ extracted <- extracted %>%
          Tair = u.LAW_MS_ICOS.Tair_f.mean)
 
 extracted <- na.omit(extracted)
+
 
 
 model <- plsr(NEE_CO2_MDS_small ~ SENTEK1 + SENTEK3 + TENSIO2 + TENSIO3 + OWASIS +
