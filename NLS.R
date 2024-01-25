@@ -49,14 +49,33 @@ plot(PCA_set$NEE_CO2_MDS_small, predicted_values,
      main = "Observed vs. Predicted NEE")
 abline(0, 1, col = "red")
 
+#this calculates R2 but this is not valid
 sse <- WL_model$m$deviance()
 null <- lm(NEE_CO2_MDS_small~1, PCA_set)
 sst <- data.frame(summary.aov(null)[[1]])$Sum.Sq
 percent_variation_explained = 100*(sst-sse)/sst
 
-
+#same here R2 not valid
 mse <- mean((PCA_set$NEE_CO2_MDS_small - predicted_values)^2)
 rsquared <- cor(PCA_set$NEE_CO2_MDS_small, predicted_values)^2
 
 AIC(WL_model)
 AIC(extended_model)
+
+linear2 <- lm(NEE_CO2_MDS_small ~ GWL + GPP + Tair + Tsoil_1_015, 
+             data = PCA_set)
+linear1 <- lm(NEE_CO2_MDS_small ~ GWL + GPP + Tair, 
+             data = PCA_set)
+linear3 <- lm(NEE_CO2_MDS_small ~ GWL + GPP + Tair + Tsoil_1_015 + ET, 
+              data = PCA_set)
+
+predicted_values <- predict(linear)
+
+# Calculate residuals
+residuals <- residuals(linear)
+
+# Calculate RSE
+n <- length(residuals)
+p <- length(coef(linear))  # Number of coefficients including intercept
+
+rse <- sqrt(sum(residuals^2) / (n - p))

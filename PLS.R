@@ -60,7 +60,15 @@ model <- plsr(NEE_CO2_MDS_small ~ SENTEK1 + SENTEK3 + TENSIO2 + TENSIO3 + OWASIS
 
 pcr_pred <- predict(model, test, ncomp = 2)
 
+
+
+#this is the RMSE
 sqrt(mean((pcr_pred - y_test)^2))
+
+#this is RSE
+sqrt(sum((pcr_pred - y_test)^2) / (length(pcr_pred - y_test) - (length(coef(model)) - 1)))
+
+
 
 coefficients <- coef(model)
 sum.coef = sum(sapply(coefficients, abs))
