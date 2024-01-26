@@ -50,10 +50,14 @@ validationplot(model, val.type = "MSEP")
 validationplot(model, val.type =  "R2")
 
 train <- PCA_set[1:105, c("NEE_CO2_MDS_small", "SENTEK1" , "SENTEK3" , "TENSIO2" , "TENSIO3" , "OWASIS" ,
-                              "GWL" , "GPP" , "Tair")]
+                              "GWL" , "GPP" , "Tair", "Tsoil_1_015")]
 y_test <- PCA_set[106:211, c("NEE_CO2_MDS_small")]
 test <- PCA_set[106:211, c("NEE_CO2_MDS_small", "SENTEK1" , "SENTEK3" , "TENSIO2" , "TENSIO3" , "OWASIS" ,
-                             "GWL" , "GPP" , "Tair")]
+                             "GWL" , "GPP" , "Tair", "Tsoil_1_015")]
+
+##############################
+
+
 
 model <- plsr(NEE_CO2_MDS_small ~ SENTEK1 + SENTEK3 + TENSIO2 + TENSIO3 + OWASIS + Tsoil_1_015 +
                 GWL + GPP + Tair, data = train, scale = TRUE, validation = "CV")
@@ -77,5 +81,5 @@ coefficients = sort(coefficients[,1,1])
 barplot(tail(coefficients, 8))
 
 model$loadings
-
+summary(model)
 
