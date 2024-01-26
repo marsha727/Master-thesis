@@ -57,6 +57,16 @@ wetting_cycle <- lapply(1:nrow(peak_T3), function(i){
 
 wetting_TS <- do.call(rbind, wetting_cycle)
 
+#Because the numbers are not chronological and peak 4 and 5 are the same
+extracted_peaks_TS <- extracted_peaks_TS %>%
+  mutate(cycle = case_when(
+    cycle_number == 1 ~ 3,
+    cycle_number == 3 ~ 1,
+    cycle_number == 4 ~ 4,
+    cycle_number == 5 ~ 4,
+    TRUE ~ cycle_number  # Keep the original value if none of the conditions are met
+  ))
+
 ggplot(extracted_peaks_TS, aes(x = SENTEK1, y = TENSIO3 )) +
   stat_smooth(method = "lm", col = "red") +
   geom_point() +
@@ -80,7 +90,7 @@ ggplot(wetting_TS, aes(x = SENTEK1, y = TENSIO3)) +
 
 # Calculate correlation separately for each cycle
 correlation_data <- extracted_peaks_TS %>%
-  group_by(cycle_number) %>%
+  group_by(cycle) %>%
   summarise(correlation = cor(SENTEK1, TENSIO2, method = "pearson"))
 
 # Create a scatter plot with a single correlation coefficient for each cycle
@@ -88,7 +98,7 @@ correlation_plot <- ggplot(extracted_peaks_TS, aes(x = SENTEK1, y = TENSIO2)) +
   stat_smooth(method = "lm", col = "red") +
   geom_point() +
   labs(title = "Correlation per cycle") +
-  facet_wrap(~cycle_number, scales = "free") +
+  facet_wrap(~cycle, scales = "free") +
   geom_text(data = correlation_data, aes(x = Inf, y = -Inf, label = sprintf("R = %.2f", correlation)), vjust = 1, hjust = 1, size = 3)
 
 #stat correlation for plotting and computing stats
@@ -99,8 +109,8 @@ correlation_plot + stat_correlation(mapping = use_label(c("R", "P")),
                                     )
 
 ggplot(extracted_peaks_TS) +
-  geom_point(aes(x = datetime, y = SENTEK1, color = factor(cycle_number))) +
-  geom_point(aes(x = datetime, y = TENSIO2, color = factor(cycle_number))) +
+  geom_point(aes(x = datetime, y = SENTEK1, color = factor(cycle))) +
+  geom_point(aes(x = datetime, y = TENSIO2, color = factor(cycle))) +
   scale_color_manual(values = c("1" = "red", "2" = "blue", "3" = "green", "4" = "orange", "5" = "purple")) +
   # You can customize colors as needed
   labs(color = "Cycle Number") +
