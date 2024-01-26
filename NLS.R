@@ -34,6 +34,9 @@ AFPS_model <- nls(NEE_CO2_MDS_small ~ alpha * GPP + beta / (1 + exp(gamma * SENT
                 start = initial_values
 )
 
+
+test <- 178.85049 / (1 + exp(0.022269 * PCA_set$GWL)) * exp(0.039848 * 15)
+
 summary(WL_model)
 summary(extended_model)
 summary(AFPS_model)
