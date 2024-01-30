@@ -12,11 +12,18 @@ initial_values <- list(
 )
 
 initial_values2 <- list(
-  alpha = 0.26,
-  oli = -0.39,
+  alpha = -0.06,
+  oli = - 0.39,
   beta = 78.28,
   gamma = 0.039,
   omega = 0.023
+)
+
+test_values <- list(
+  alpha = 0.178,
+  beta = 136.25,
+  gamma = 10,
+  omega = 0.053
 )
 
 WL_model <- nls(NEE_CO2_MDS_small ~ alpha * GPP + beta / (1 + exp(gamma * GWL)) * exp(omega * Tair),
@@ -29,17 +36,37 @@ extended_model <- nls(NEE_CO2_MDS_small ~ alpha * GPP * exp(oli * Tair) + beta /
                 start = initial_values2
 )
 
-AFPS_model <- nls(NEE_CO2_MDS_small ~ alpha * GPP + beta / (1 + exp(gamma * SENTEK1)) * exp(omega * Tair),
+AFPS_model <- nls(NEE_CO2_MDS_small ~ alpha * GPP + beta / (1 + exp(gamma * -SENTEK1)) * exp(omega * Tair),
                 data = PCA_set,
                 start = initial_values
 )
 
+test_model <- nls(NEE_CO2_MDS_small ~ alpha * GPP + ((beta * TENSIO2) / (gamma + TENSIO2)) * exp(omega * Tair),
+                  data = PCA_set,
+                  start = test_values)
 
-test <- 178.85049 / (1 + exp(0.022269 * PCA_set$GWL)) * exp(0.039848 * 15)
+
+test <- -0.067 * PCA_set$GPP + 178.85049 / (1 + exp(0.022269 * PCA_set$GWL)) * exp(0.039848 * PCA_set$Tair)
+
+ggplot(data = PCA_set, aes(x = GWL, y = test)) + geom_point() + geom_smooth(method = "loess", col = "red")
+
+test2 <- -1.18291 * PCA_set$GPP * exp(-0.36501 * PCA_set$Tair) + 162.76352 / (1 + exp(0.01094 * PCA_set$GWL)) * exp(0.05148 * PCA_set$Tsoil_1_015)
+
+ggplot(data = PCA_set, aes(x = GWL, y = test2)) + geom_point() + geom_smooth(method = "loess", col = "red")
+
+test3 <- -0.046133 * PCA_set$GPP + 222.587933 / (1 + exp(0.006830 * PCA_set$SENTEK1)) * exp(0.044859 * PCA_set$Tair)
+
+ggplot(data = PCA_set, aes(x = SENTEK1, y = test3)) + geom_point() + geom_smooth(method = "loess", col = "red")
+
+test4 <- -0.008656 * PCA_set$GPP + ((138.538559 * PCA_set$SENTEK1) / (0.404 + PCA_set$SENTEK1)) * exp(0.040339 * PCA_set$Tair)
+
+ggplot(data = PCA_set, aes(x = TENSIO2, y = test4)) + geom_point() + geom_smooth(method = "loess", col = "red")
+
 
 summary(WL_model)
 summary(extended_model)
 summary(AFPS_model)
+summary(test_model)
 
 AIC(WL_model, extended_model)
 
