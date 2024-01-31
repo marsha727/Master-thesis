@@ -194,3 +194,54 @@ n <- length(residuals)
 p <- length(coef(linear))  # Number of coefficients including intercept
 
 rse <- sqrt(sum(residuals^2) / (n - p))
+
+
+#AFPS model unaltered###############################################
+initial_values <- list(
+  alpha = 0.178,
+  beta = 136.28,
+  gamma = 0.022,
+  omega = 0.053
+)
+
+noGPP_values <- list(
+  beta = 136.28,
+  gamma = 0.022,
+  omega = 0.053
+)
+
+onlyAFPS_values <-  list(
+  beta = 136.28,
+  gamma = 0.022
+)
+
+noTair_values <- list(
+  omega = 0.053
+)
+
+AFPS_model <- nls(NEE_CO2_MDS_small ~ alpha * GPP + beta / (1 + exp(-gamma * SENTEK1)) * exp(omega * Tair),
+                  data = PCA_set,
+                  start = initial_values
+)
+
+noGPP <- nls(NEE_CO2_MDS_small ~ beta / (1 + exp(-gamma * SENTEK1)) * exp(omega * Tair),
+             data = PCA_set,
+             start = noGPP_values
+)
+
+onlyAFPS <- nls(NEE_CO2_MDS_small ~ beta / (1 + exp(-gamma * SENTEK1)),
+                data = PCA_set,
+                start = onlyAFPS_values
+)
+
+onlyTair <- nls(NEE_CO2_MDS_small ~ exp(omega * Tair),
+                data = PCA_set,
+                start = noTair_values
+)
+
+summary(AFPS_model)
+summary(noGPP)
+summary(onlyAFPS)
+summary(onlyTair)
+
+AIC(AFPS_model, noGPP, onlyAFPS, onlyTair)
