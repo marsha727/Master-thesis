@@ -61,7 +61,7 @@ ggplot(extracted) +
   geom_point(aes(x = SENTEK3, y = NEE_CO2_MDS_small, shape = "SENTEK3", color = Tair)) +
   geom_point(aes(x = TENSIO2, y = NEE_CO2_MDS_small, shape = "TENSIO2", color = Tair)) +
   geom_point(aes(x = TENSIO3, y = NEE_CO2_MDS_small, shape = "TENSIO3", color = Tair)) +
-  geom_point(aes(x = OWASIS, y = NEE_CO2_MDS_small, shape = "OWASIS", color = Tair)) +
+  #geom_point(aes(x = OWASIS, y = NEE_CO2_MDS_small, shape = "OWASIS", color = Tair)) +
   scale_shape_manual(values = c(16, 17, 25, 15, 22)) +
   scale_color_viridis(option = "turbo") +
   labs(
@@ -77,11 +77,30 @@ ggplot(extracted) +
 ggplot(extracted) +
   geom_point(aes(x = SENTEK1, y = NEE_CO2_MDS_small, shape = "SENTEK1", color = GWL)) +
   geom_point(aes(x = SENTEK3, y = NEE_CO2_MDS_small, shape = "SENTEK3", color = GWL)) +
-  #geom_point(aes(x = TENSIO2, y = NEE_CO2_MDS_small, shape = "TENSIO2", color = GWL)) +
-  #geom_point(aes(x = TENSIO3, y = NEE_CO2_MDS_small, shape = "TENSIO3", color = GWL)) +
+  geom_point(aes(x = TENSIO2, y = NEE_CO2_MDS_small, shape = "TENSIO2", color = GWL)) +
+  geom_point(aes(x = TENSIO3, y = NEE_CO2_MDS_small, shape = "TENSIO3", color = GWL)) +
   #geom_point(aes(x = OWASIS, y = NEE_CO2_MDS_small, shape = "OWASIS", color = GWL)) +
   scale_shape_manual(values = c(17, 25, 15, 22)) +
   scale_color_viridis(option = "turbo", trans = "reverse") +
+  labs(
+    x = "AFPS [mm]",
+    y = "NEE CO2 [kg day-1 ha-1]"
+  ) +
+  theme(
+    panel.border = element_rect(color = "black", fill = NA, size = 0.5),
+    panel.background = element_rect(fill = "white", color = "black")
+  )
+
+# Define the custom color gradient
+custom_colors <- c("black", "red", "yellow", "green")
+
+ggplot(extracted) +
+  #geom_point(aes(x = SENTEK1, y = NEE_CO2_MDS_small, shape = "SENTEK1", color = GPP)) +
+  #geom_point(aes(x = SENTEK3, y = NEE_CO2_MDS_small, shape = "SENTEK3", color = GPP)) +
+  geom_point(aes(x = TENSIO2, y = NEE_CO2_MDS_small, shape = "TENSIO2", color = GPP)) +
+  geom_point(aes(x = TENSIO3, y = NEE_CO2_MDS_small, shape = "TENSIO3", color = GPP)) +
+  scale_shape_manual(values = c(17, 25, 15, 22)) +
+  scale_color_gradientn(colors = custom_colors) +
   labs(
     x = "AFPS [mm]",
     y = "NEE CO2 [kg day-1 ha-1]"
