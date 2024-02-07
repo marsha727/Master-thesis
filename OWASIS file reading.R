@@ -35,13 +35,13 @@ pPolders <- vect(pathPolders)
 #empty list
 lTowi <- list()
 #create a sequence of dates
-lDay <- seq.Date(as.Date("2020-01-01","%Y-%m-%d"),as.Date("2023-12-31","%Y-%m-%d"),by = "1 day")
+lDay <- seq.Date(as.Date("2022-04-02","%Y-%m-%d"),as.Date("2022-11-01","%Y-%m-%d"),by = "1 day")
 #A new data frame with day as variable
 df.owasis <- data.frame(day=lDay)
 
 #This taken the towers polygon (of polder) and than creates a buffer around this with 250 m
 #cropped to pPolders so it will exclude the canal etc. that is outside the SSI
-polTowers1 <- buffer(pTowers,width=250)
+polTowers1 <- buffer(pTowers,width=500)
 polTowers1 <- crop(polTowers1,pPolders)
 
 #i think this might be outside the loop as well to make sure the namesPix is generated for later
@@ -223,12 +223,12 @@ ggplot(OWASIS_BBB_GW) +
 
 #just to visually check the variation
 ggplot(OWASIS_BBB_GW, aes(x = Date)) +
-  geom_line(aes(y = MeanBBB), color = "blue") +
+  #geom_line(aes(y = MeanBBB), color = "blue") +
   geom_line(aes(y = MedianBBB), color = "red") +
-  geom_ribbon(aes(ymin = MeanBBB - StdevBBB, ymax = MeanBBB + StdevBBB), fill = "lightblue", alpha = 0.5) +
-  geom_ribbon(aes(ymin = MedianBBB - MadBBB, ymax = MedianBBB + MadBBB), fill = "pink", alpha = 0.5) +
+  #geom_ribbon(aes(ymin = MeanBBB - StdevBBB, ymax = MeanBBB + StdevBBB), fill = "lightblue", alpha = 0.5) +
+  geom_ribbon(aes(ymin = MedianBBB - StdevBBB, ymax = MedianBBB + StdevBBB), fill = "pink", alpha = 0.5) +
   labs(
-    title = "Mean/median pixel values with STDEV/MAD",
+    title = "Mean/median pixel values with STDEV",
        x = "Date",
        y = "BBB (mm)"
     )
