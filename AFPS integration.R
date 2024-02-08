@@ -22,69 +22,70 @@ AFPS_int_SENTEK <- AFPS_SENTEK %>%
   mutate(Probe1 = SWC_1_025 + SWC_1_035 + SWC_1_045 + SWC_1_055 + SWC_1_065) %>% 
   mutate(Probe3= SWC_3_025 + SWC_3_035 + SWC_3_045 + SWC_3_055 + SWC_1_065)
 
+#This integrate TENSIO per halfhour
 AFPS_int_TENSIO <- AFPS_TENSIO %>% 
   group_by(datetime) %>% 
   summarise(AFPS2 = sum(AFPS2), AFPS3 = sum(AFPS3))
 
-#write a RDS just for APP
-write_rds(AFPS_int_SENTEK, "App/Langeweide_sentek_int.rds")
-write_rds(AFPS_int_TENSIO, "App/Langeweide_tensio_int.rds")
+#write a RDS just for APP with halfhourly for testing
+#write_rds(AFPS_int_SENTEK, "App/Langeweide_sentek_int.rds")
+#write_rds(AFPS_int_TENSIO, "App/Langeweide_tensio_int.rds")
 
 #Period of analysis
 start_date <- "2022-04-02"
 end_date1 <- "2022-11-02"
-end_date2 <- "2022-11-01" #do it ask me why but the other cut doesnt work for tensio
-end_date3 <- "2022-10-31"
+end_date2 <- "2022-11-01" #dont it ask me why but the other cut doesnt work for tensio
+end_date3 <- "2022-10-31 23:30:00"
 
 #filter for the dates
 AFPS_int_SENTEK <- AFPS_int_SENTEK %>% 
-  filter(datetime >= start_date & datetime <= end_date2)
+  filter(datetime >= start_date & datetime <= end_date3)
 
 AFPS_int_TENSIO <- AFPS_int_TENSIO %>% 
   filter(datetime >= start_date & datetime <= end_date2)
 
-AFPS_SENTEK <- AFPS_SENTEK %>% 
-  filter(datetime >= start_date & datetime <= end_date3)
+#AFPS_SENTEK <- AFPS_SENTEK %>% 
+ # filter(datetime >= start_date & datetime <= end_date3)
 
-AFPS_TENSIO <- AFPS_TENSIO %>% 
-  filter(datetime >= start_date & datetime <= end_date2)
+#AFPS_TENSIO <- AFPS_TENSIO %>% 
+ # filter(datetime >= start_date & datetime <= end_date2)
 
-Langeweide_data <- Langeweide_data %>% 
-  filter(day >= start_date & day <= end_date3)
+#Langeweide_data <- Langeweide_data %>% 
+ # filter(day >= start_date & day <= end_date3)
 
-OWASIS_BBB <- OWASIS_BBB %>% 
-  filter(Date >= start_date & Date <= end_date3)
+#OWASIS_BBB <- OWASIS_BBB %>% 
+ # filter(Date >= start_date & Date <= end_date3)
 
-ET <- ET %>% 
-  filter(datetime >= start_date & datetime <= end_date3)
+#ET <- ET %>% 
+ # filter(datetime >= start_date & datetime <= end_date3)
 
-ET_halfhour <- ET_halfhour %>% 
-  filter(datetime >= "2022-04-02 01:00:00" & datetime <= "2022-10-31 23:30:00")
+#ET_halfhour <- ET_halfhour %>% 
+ # filter(datetime >= "2022-04-02 01:00:00" & datetime <= "2022-10-31 23:30:00")
 
 #make subselection of langeweide before using
-Langeweide_data <- Langeweide_data %>% 
-  select(datetime, WL_cor, BBB,
-         NEE_CO2, NEE_CO2_MDS, NEE_CO2_MDS2, 
-         Tsoil_1_005, Tsoil_1_015, Tsoil_1_025, Tsoil_1_035, Tsoil_1_045, Tsoil_1_055,
-         Tsoil_3_065, Tsoil_1_075, Tsoil_1_085, Tsoil_1_095, Tsoil_1_105, Tsoil_3_005, Tsoil_3_015, Tsoil_3_025, Tsoil_3_035, Tsoil_3_045, Tsoil_3_055,
-         Tsoil_3_065, Tsoil_3_075, Tsoil_3_085, Tsoil_3_095, Tsoil_3_105)
+#Langeweide_data <- Langeweide_data %>% 
+ # select(datetime, WL_cor, BBB,
+  #       NEE_CO2, NEE_CO2_MDS, NEE_CO2_MDS2, 
+   #      Tsoil_1_005, Tsoil_1_015, Tsoil_1_025, Tsoil_1_035, Tsoil_1_045, Tsoil_1_055,
+    #     Tsoil_3_065, Tsoil_1_075, Tsoil_1_085, Tsoil_1_095, Tsoil_1_105, Tsoil_3_005, Tsoil_3_015, Tsoil_3_025, Tsoil_3_035, Tsoil_3_045, Tsoil_3_055,
+     #    Tsoil_3_065, Tsoil_3_075, Tsoil_3_085, Tsoil_3_095, Tsoil_3_105)
 
 #need to aggregate by day for OWASIS
-AFPS_int_SENTEK <- AFPS_int_SENTEK %>% 
-  group_by(datetime = format(datetime, "%Y-%m-%d")) %>% 
-  summarise(across(everything(), ~mean(., na.rm = TRUE)))
+#AFPS_int_SENTEK <- AFPS_int_SENTEK %>% 
+ # group_by(datetime = format(datetime, "%Y-%m-%d")) %>% 
+  #summarise(across(everything(), ~mean(., na.rm = TRUE)))
 
 #need to aggregate by day for OWASIS
-AFPS_int_TENSIO <- AFPS_int_TENSIO %>% 
-  group_by(datetime = as.Date(datetime)) %>% 
-  summarise(across(everything(), ~mean(., na.rm = TRUE)))
+#AFPS_int_TENSIO <- AFPS_int_TENSIO %>% 
+ # group_by(datetime = as.Date(datetime)) %>% 
+  #summarise(across(everything(), ~mean(., na.rm = TRUE)))
 
 
 #Correct datetime format
 AFPS_int_SENTEK$datetime <- as.POSIXct(AFPS_int_SENTEK$datetime, format = "%Y-%m-%d")
 
 #Combined AFPS TENSIO AND SENTEK
-AFPS_int_TS <- bind_cols(AFPS_int_SENTEK[1], AFPS_int_SENTEK[ ,27:28], AFPS_int_TENSIO[ ,2:3], OWASIS_BBB[4])
+AFPS_int_TS <- bind_cols(AFPS_int_SENTEK[1], AFPS_int_SENTEK[ ,27:28], AFPS_int_TENSIO[ ,2:3])
 AFPS_int_TS_halfhour <- bind_cols(AFPS_int_SENTEK[1], AFPS_int_SENTEK[ ,27:28], AFPS_int_TENSIO[ ,2:3])
 
 #correct datetime format
