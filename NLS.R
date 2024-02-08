@@ -34,13 +34,13 @@ dim(testing)
 
 #Original fit from Bart##################################################
 initial_values <- list(
-  alpha = 0.1,
+  alpha = -0.02,
   beta = 135.1,
   gamma = 0.027,
   omega = 0.038
 )
 
-WL_model <- nls(NEE_CO2_MDS_small ~ alpha * GPP + beta / (1 + exp(gamma * GWL)) * exp(omega * Tair),
+WL_model <- nls(NEE_CO2_MDS_small ~ alpha * GPP + beta / (1 + exp(gamma * GWL + c)) * exp(omega * Tair),
                 data = PCA_set,
                 start = initial_values
 )
