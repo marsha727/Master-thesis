@@ -9,6 +9,10 @@ AFPS_int_TS <- read_rds("App/AFPS_int_TS.rds")
 
 columns <- c("SENTEK1", "SENTEK3", "TENSIO2", "TENSIO3")
 
+#I extracted the data for only the peaks using findpeaks
+#created data set exclusively for peaks: extracted_peaks_TS
+#Also have seperated wet and dry cycled in drying_TS and wetting_TS
+
 peak_T3 <- findpeaks(AFPS_int_TS$TENSIO3, minpeakheight = 17, minpeakdistance = 4)
 print(peak_T3)
 
@@ -57,6 +61,8 @@ wetting_cycle <- lapply(1:nrow(peak_T3), function(i){
 
 wetting_TS <- do.call(rbind, wetting_cycle)
 
+#continue working on extracted peaks dataframe
+
 #Because the numbers are not chronological and peak 4 and 5 are the same
 extracted_peaks_TS <- extracted_peaks_TS %>%
   mutate(cycle = case_when(
@@ -66,6 +72,8 @@ extracted_peaks_TS <- extracted_peaks_TS %>%
     cycle_number == 5 ~ 4,
     TRUE ~ cycle_number  # Keep the original value if none of the conditions are met
   ))
+
+#Analysis of the data using ggplot and later on the correlaiton map
 
 ggplot(extracted_peaks_TS, aes(x = SENTEK1, y = TENSIO3 )) +
   stat_smooth(method = "lm", col = "red") +
@@ -88,6 +96,7 @@ ggplot(wetting_TS, aes(x = SENTEK1, y = TENSIO3)) +
   ) 
   
 
+#correlation here
 # Calculate correlation separately for each cycle
 correlation_data <- extracted_peaks_TS %>%
   group_by(cycle) %>%
@@ -132,3 +141,28 @@ correlation_plot + stat_correlation(mapping = use_label(c("R", "P")),
                                     label.x = "left", 
                                     label.y = "top"
 )
+
+subset_list <- extracted_peaks_TS %>%
+  group_split(cycle)
+
+# Calculate correlation matrices for each subset
+cor_matrices <- lapply(subset_list, function(subset_data) {
+  cor_matrix <- cor(subset_data[, 2:6], method = "spearman", use = "pairwise.complete.obs")
+  M <- cor_matrix
+  M[upper.tri(M)] <- NA
+  diag(M) <- NA
+  melt(M, na.rm = TRUE)
+})
+
+# Create separate heatmaps for each cycle
+heatmap_plots <- lapply(seq_along(cor_matrices), function(i) {
+  ggplot(cor_matrices[[i]], aes(Var1, Var2, fill = value)) +
+    geom_tile() +
+    geom_text(aes(label = ifelse(is.na(value), "", round(value, 2))), vjust = 1) +
+    scale_fill_gradient2(low = "blue", mid = "white", high = "red", limits = c(-1, 1)) +
+    theme_minimal() +
+    labs(title = paste("Cycle", as.numeric(names(cor_matrices)[i])))
+})
+
+library(gridExtra)
+grid.arrange(grobs = heatmap_plots, ncol = 3)
