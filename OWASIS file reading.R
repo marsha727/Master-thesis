@@ -41,7 +41,7 @@ df.owasis <- data.frame(day=lDay)
 
 #This taken the towers polygon (of polder) and than creates a buffer around this with 250 m
 #cropped to pPolders so it will exclude the canal etc. that is outside the SSI
-polTowers1 <- buffer(pTowers,width=500)
+polTowers1 <- buffer(pTowers,width=250)
 polTowers1 <- crop(polTowers1,pPolders)
 
 #i think this might be outside the loop as well to make sure the namesPix is generated for later
@@ -121,6 +121,7 @@ for (date in lDay) {
     subset_data <- Pixel[Pixel$day %in% as.Date(date), "LAW_MS_ICOS"]
     if (length(subset_data) > 0) {
       return(subset_data)
+      print(subset_data)
     } else {
       return(NA)
     }
@@ -128,7 +129,8 @@ for (date in lDay) {
   
   # Check for NA
   valueForDate <- unlist(valueForDate)
-  valueForDate <- valueForDate[!is.na(valueForDate)]
+  #valueForDate <- valueForDate[!is.na(valueForDate)]
+  valueForDate <- valueForDate[!is.na(valueForDate) & valueForDate != 0]
   
   # Calculate the mean for the current date ignoring NA in calc
   #gives values that are NA, a NaN, otherwise calculate mean or sd
@@ -157,7 +159,8 @@ for (date in lDay) {
   
   # Check for NA
   valueForDate_GW <- unlist(valueForDate_GW)
-  valueForDate_GW <- valueForDate_GW[!is.na(valueForDate_GW)]
+  #valueForDate_GW <- valueForDate_GW[!is.na(valueForDate_GW)]
+  valueForDate_GW <- valueForDate_GW[!is.na(valueForDate_GW) & valueForDate_GW != 0]
   
   # Calculate the mean for the current date ignoring NA in calc
   #gives values that are NA, a NaN, otherwise calculate mean or sd
@@ -228,7 +231,7 @@ ggplot(OWASIS_BBB_GW, aes(x = Date)) +
   #geom_ribbon(aes(ymin = MeanBBB - StdevBBB, ymax = MeanBBB + StdevBBB), fill = "lightblue", alpha = 0.5) +
   geom_ribbon(aes(ymin = MedianBBB - StdevBBB, ymax = MedianBBB + StdevBBB), fill = "pink", alpha = 0.5) +
   labs(
-    title = "Mean/median pixel values with STDEV",
+    title = "median pixel values with STDEV",
        x = "Date",
        y = "BBB (mm)"
     )
