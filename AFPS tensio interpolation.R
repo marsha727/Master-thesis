@@ -234,9 +234,9 @@ AFPS_mm_tensio <- AFPS_tensio %>%
   )
 
 #This way just a test
-Integrated_AFPS <- AFPS_mm_tensio %>% 
-  group_by(date_2) %>% 
-  summarise(AFPS_int2 = sum(AFPS2_mm), AFPS_int3 = sum(AFPS3_mm))
+#Integrated_AFPS <- AFPS_mm_tensio %>% 
+  #group_by(date_2) %>% 
+  #summarise(AFPS_int2 = sum(AFPS2_mm), AFPS_int3 = sum(AFPS3_mm))
 
 #SWC jumps due to bodem fysische metingen
 #Test_SWC <- SWC_TENSIO %>% 
