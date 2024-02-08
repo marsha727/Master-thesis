@@ -60,24 +60,24 @@ WFPS_Sentek <- SF_n %>%
 
 
 #Normalizing the soil moisture
-Max_SM <- sapply(Soil_moisture, function(x) max(x, na.rm = TRUE))
-Min_SM <- sapply(Soil_moisture, function(x) min(x, na.rm = TRUE))
+#Max_SM <- sapply(Soil_moisture, function(x) max(x, na.rm = TRUE))
+#Min_SM <- sapply(Soil_moisture, function(x) min(x, na.rm = TRUE))
 
-SM_norm <- function(x, max_SM, min_SM){
-  ifelse(is.na(x), NA, (x - min_SM)/(max_SM - min_SM))
-}
+#SM_norm <- function(x, max_SM, min_SM){
+  #ifelse(is.na(x), NA, (x - min_SM)/(max_SM - min_SM))
+#}
 
-cols_to_normalize <- setdiff(names(Soil_moisture), c("datetime", "Tair"))
+#cols_to_normalize <- setdiff(names(Soil_moisture), c("datetime", "Tair"))
 
-SM_n <- Soil_moisture
+#SM_n <- Soil_moisture
 
-for(col in cols_to_normalize){
-  max_SM <- Max_SM[col] 
-  min_SM <- Min_SM[col]
-  print(max_SM)
-  print(min_SM)
-  SM_n[[col]] <- SM_norm(SM_n[[col]], max_SM, min_SM)
-}
+#for(col in cols_to_normalize){
+ # max_SM <- Max_SM[col] 
+  #min_SM <- Min_SM[col]
+  #print(max_SM)
+  #print(min_SM)
+  #SM_n[[col]] <- SM_norm(SM_n[[col]], max_SM, min_SM)
+#}
 
 #calculating the AFPS
 Max_values_WFPS <- sapply(WFPS_Sentek, function(x) max(x, na.rm = TRUE))
@@ -101,47 +101,37 @@ for(col in cols_to_normalize_AFPS){
 }
 
 #Make a new dataframe that contains SWC, SF and WFPS
-new_column_names_WFPS <- paste(names(WFPS_Sentek), "WFPS", sep = "_") #Give new colnames to differentiate
-colnames(WFPS_Sentek) <- new_column_names_WFPS
-new_column_names_SF <- paste(names(SF_Soil_moisture), "SF", sep = "_")
-colnames(SF_Soil_moisture) <- new_column_names_SF
+#new_column_names_WFPS <- paste(names(WFPS_Sentek), "WFPS", sep = "_") #Give new colnames to differentiate
+#colnames(WFPS_Sentek) <- new_column_names_WFPS
+#new_column_names_SF <- paste(names(SF_Soil_moisture), "SF", sep = "_")
+#colnames(SF_Soil_moisture) <- new_column_names_SF
 
-Sentek <- bind_cols(Soil_moisture, SF_Soil_moisture, WFPS_Sentek)
+#Sentek <- bind_cols(Soil_moisture, SF_Soil_moisture, WFPS_Sentek)
 
-Sentek <- Sentek %>% #remove double columns
-  select(-datetime_WFPS, -datetime_SF, -Tair_WFPS, -Tair_SF)
+#Sentek <- Sentek %>% #remove double columns
+ # select(-datetime_WFPS, -datetime_SF, -Tair_WFPS, -Tair_SF)
 
 #A second version with also the normalized values
-new_column_names_SMn <- paste(names(SM_n), "N", sep = "_")
-colnames(SM_n) <- new_column_names_SMn
-new_column_names_SFn <- paste(names(SF_n), "SF_N", sep = "_")
-colnames(SF_n) <- new_column_names_SFn
+#new_column_names_SMn <- paste(names(SM_n), "N", sep = "_")
+#colnames(SM_n) <- new_column_names_SMn
+#new_column_names_SFn <- paste(names(SF_n), "SF_N", sep = "_")
+#colnames(SF_n) <- new_column_names_SFn
 
-Sentek_Norm <- bind_cols(Sentek, SM_n, SF_n)
+#Sentek_Norm <- bind_cols(Sentek, SM_n, SF_n)
 
-Sentek_Norm <- Sentek_Norm %>% #remove double columns
-  select(-datetime_N, -datetime_SF_N, -Tair_N, -Tair_SF_N)
+#Sentek_Norm <- Sentek_Norm %>% #remove double columns
+  #select(-datetime_N, -datetime_SF_N, -Tair_N, -Tair_SF_N)
 
 #Ensures the datetime is in correct formating for writing csv
-Sentek$datetime <- format(Sentek$datetime, format = "%Y-%m-%d %H:%M:%S")
-Sentek_Norm$datetime <- format(Sentek_Norm$datetime, format = "%Y-%m-%d %H:%M:%S")
-SM_n$datetime <- format(SM_n$datetime, format = "%Y-%m-%d %H:%M:%S")
+#Sentek$datetime <- format(Sentek$datetime, format = "%Y-%m-%d %H:%M:%S")
+#Sentek_Norm$datetime <- format(Sentek_Norm$datetime, format = "%Y-%m-%d %H:%M:%S")
+#SM_n$datetime <- format(SM_n$datetime, format = "%Y-%m-%d %H:%M:%S")
 AFPS_mm_SENTEK$datetime <- format(AFPS_mm_SENTEK$datetime, format = "%Y-%m-%d %H:%M:%S")
 
 #Extracting dataset to CSV
-write.csv2(Sentek, file = "Transformed/Langeweide_Sentek.csv", row.names = FALSE)
-write.csv2(Sentek_Norm, file = "Transformed/Langeweide_Sentek_normalized.csv", row.names = FALSE)
-write.csv2(SM_n, file = "Transformed/Langeweide_normalized_SWC.csv", row.names = FALSE)
+#write.csv2(Sentek, file = "Transformed/Langeweide_Sentek.csv", row.names = FALSE)
+#write.csv2(Sentek_Norm, file = "Transformed/Langeweide_Sentek_normalized.csv", row.names = FALSE)
+#write.csv2(SM_n, file = "Transformed/Langeweide_normalized_SWC.csv", row.names = FALSE)
 
 write.csv2(AFPS_mm_SENTEK, file = "Transformed/Langeweide_Sentek_AFPS.csv", row.names = FALSE)
 test.read <- read.csv2("Transformed/Langeweide_Sentek_AFPS.csv")
-
-#test for Precipitation
-Precipitation <- Langeweide_data %>% 
-  select(RAIN, RAIN_NOBV1, RAIN_NOBV2)
-
-P_Soil_moisture <- bind_cols(Sentek, Precipitation)
-
-P_Soil_moisture$datetime <- format(P_Soil_moisture$datetime, format = "%Y-%m-%d %H:%M:%S")
-write.csv2(P_Soil_moisture, file = "Transformed/Langeweide_P_SWC.csv", row.names = TRUE)
-
