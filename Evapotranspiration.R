@@ -51,36 +51,6 @@ ET$sunrise <- as.POSIXct(ET$sunrise, format = "%Y-%m-%d %H:%M:%S")
 
 ET$within_range <- ET$datetime >= ET$sunrise & ET$datetime <= ET$sunset
 
-
-# this gives SWIN a 0 (for night) but only if its within 3 hours sunset/sunrise
-ET$SWIN <- ifelse(
-  is.na(ET$SWIN) & (
-    !ET$within_range |
-      shift(!ET$within_range, 1) |
-      shift(!ET$within_range, 2) |
-      shift(!ET$within_range, 3) |
-      shift(!ET$within_range, -1) |  
-      shift(!ET$within_range, -2) |
-      shift(!ET$within_range, -3) 
-  ),
-  0,
-  ET$SWIN
-)
-
-ET$SWOUT <- ifelse(
-  is.na(ET$SWOUT) & (
-    !ET$within_range |
-      shift(!ET$within_range, 1) |
-      shift(!ET$within_range, 2) |
-      shift(!ET$within_range, 3) |
-      shift(!ET$within_range, -1) |  # Include the previous row
-      shift(!ET$within_range, -2) |
-      shift(!ET$within_range, -3) # Include two rows before
-  ),
-  0,
-  ET$SWOUT
-)
-
 #daily values but ensure to exclude days with too few data points
 ET_d <- ET %>%
   group_by(datetime = format(datetime, "%Y-%m-%d")) %>%
@@ -107,28 +77,6 @@ ET_neg <- ET_d %>%
 ET_neg2 <- ET %>% 
   filter(ET < 0)
 
-#test if these high RH are also present in other RH measurements
-{Sat_dates <- ET_neg %>% 
-  select(datetime)
-
-RH_measurements <- Langeweide_data %>% 
-  select(datetime, RH, RH_NOBV1, RH_NOBV2, RH_KNMI)
-
-RH_measurements_d <- RH_measurements %>% 
-  group_by(datetime = format(datetime, "%Y-%m-%d")) %>% 
-  summarise(
-    RH = ifelse(sum(!is.na(RH)) >= 36, mean(RH, na.rm = TRUE), NA),
-    RH_NOBV1 = ifelse(sum(!is.na(RH_NOBV1)) >= 36, mean(RH_NOBV1, na.rm = TRUE), NA),
-    RH_NOBV2 = ifelse(sum(!is.na(RH_NOBV2)) >= 36, mean(RH_NOBV2, na.rm = TRUE), NA),
-    RH_KNMI = ifelse(sum(!is.na(RH_KNMI)) >= 18, mean(RH_KNMI, na.rm = TRUE), NA),
-  )
-
-RH_measurements_d$datetime <- as.POSIXct(RH_measurements_d$datetime, format = "%Y-%m-%d")
-
-RH_measurements_neg <- RH_measurements_d %>% 
-  filter(datetime %in% Sat_dates$datetime)
-}
-
 #lets test for Tair = Tdew conditions and P > 0 conditions
 RH_check <- ET_neg2 %>% 
   filter(RH > 95) %>% 
@@ -136,7 +84,6 @@ RH_check <- ET_neg2 %>%
 
 matching_row <- which(ET$datetime %in% RH_check$datetime) 
 
-ET_d[matching_row, "ET"] <- NA
 ET[matching_row, "ET"] <- NA
 
 #filter for wind conditions that are from SW (least water influence)
@@ -154,16 +101,11 @@ ET_d[matching_row, "ET"] <- NA
 #calculate EF by converting back to LE and using sensible heat flux
 ET_d <- ET_d %>%   
   mutate(LE = (ET * 2.45) / 0.0864) %>% #LE of vapor and conversion factor W/m2
-  mutate(Rn = SWIN - SWOUT + LWIN - LWOUT) %>% 
-  mutate(EF1 = LE / Rn) %>% 
-  mutate(EF2 = 1 / (1 + bowen_ratio)) %>% 
+  #mutate(Rn = SWIN - SWOUT + LWIN - LWOUT) %>%  
+  #mutate(EF1 = LE / Rn) %>% 
+  #mutate(EF2 = 1 / (1 + bowen_ratio)) %>% 
   mutate(EF3 = LE / (LE + (NEE_H / 0.0864))) %>% 
   mutate(T = LE + (NEE_H / 0.0864))
-
-ET_d1 <- ET_d %>% 
-  filter(EF1 < 1 & EF1 > -1)
-
-ET_d1$datetime <- as.POSIXct(ET_d1$datetime, format = "%Y-%m-%d")
 
 #make sure new datetime is in correct formatting
 ET_d$datetime <- as.POSIXct(ET_d$datetime, format = "%Y-%m-%d")
@@ -184,7 +126,7 @@ test <- readRDS("App/Langeweide_ET_halfhour.rds")
 
 
 
-#Checking relationships
+#Checking relationships below
 
 #filtered ET overtime
 ggplot(ET_p_filtered_f2) +
