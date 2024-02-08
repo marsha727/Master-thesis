@@ -58,6 +58,10 @@ GWL_LAW <- GWL_old %>%
 GWL_LAW$GWL_mean <- ifelse(is.nan(GWL_LAW$GWL_mean), NA, GWL_LAW$GWL_mean)
 GWL_LAW <- GWL_LAW[!is.na(GWL_LAW$GWL_mean), ]
 
+#About 5 cm difference due to old data having wrong reference height
+#previously based on AHN instead of field measurement
+#analysis use GWL_mmv
+
 GWL_LAW$datetime <- format(GWL_LAW$datetime, "%Y-%m-%d %H:%M:%S")
 GWL_mmv$datetime <- format(GWL_mmv$datetime, "%Y-%m-%d %H:%M:%S")
 
