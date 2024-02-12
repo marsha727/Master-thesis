@@ -34,13 +34,14 @@ dim(testing)
 
 #Original fit from Bart##################################################
 initial_values <- list(
-  alpha = 0.17,
-  beta = 136,
-  gamma = 0.027,
-  omega = 0.053
+  alpha = 0.26,
+  beta = 135,
+  gamma = 0.1,
+  omega = 0.040,
+  c = 100
 )
 
-WL_model <- nls(NEE_CO2_MDS_small ~ alpha * GPP + beta / (1 + exp(gamma * GWL)) * exp(omega * Tair),
+WL_model <- nls(NEE_CO2_MDS_small ~ alpha * GPP + beta / (1 + exp(gamma * (GWL + c))) * exp(omega * Tair),
                 data = PCA_set,
                 start = initial_values
 )
@@ -99,18 +100,18 @@ model_caret <- train(NEE_CO2_MDS_small ~ predict_NEE(NEE),
 
 #AFPS model unaltered###############################################
 initial_values_AFPS <- list(
-  alpha = 0.087,
-  beta = 97,
-  gamma = 0.027,
-  omega = 0.053
+  alpha = 0.26,
+  beta = 97.6,
+  gamma = 0.039,
+  omega = 0.059
 )
 
 initial_values_AFPS_c <- list(
-  alpha = 0.178,
-  beta = 136.28,
-  gamma = 0.059,
-  omega = 0.043,
-  c = 0.9
+  alpha = 0.26,
+  beta = 97.3,
+  gamma = 0.039,
+  omega = 0.059,
+  c = 0.5
 )
 
 AFPS_model <- nls(NEE_CO2_MDS_small ~ alpha * GPP + beta / (1 + exp(-gamma * SENTEK1)) * exp(omega * Tair),
@@ -126,20 +127,21 @@ AFPS_model_c <- nls(NEE_CO2_MDS_small ~ alpha * GPP + beta / (1 + exp(-gamma * (
 summary(AFPS_model)
 summary(AFPS_model_c)
 
-test_AFPS <- -0.046132 * PCA_set$GPP + 222.5864 / (1 + exp(-0.00683 * PCA_set$SENTEK1)) * exp(0.044859 * PCA_set$Tair)
-test_AFPS_c <- 0.003648 * PCA_set$GPP + 135.7 / (1 + exp(-0.2747 * PCA_set$SENTEK1 + 0.9748)) * exp(0.04063 * PCA_set$Tair)
+models <- list(AFPS_model, AFPS_model_c, WL_model)
+model_names <- c("AFPS_model", "AFPS_model_c", "WL_model")
+
+aictab(cand.set = models, modnames = model_names)
+
+test_AFPS <- -0.046132 * PCA_set$GPP + 135.7 / (1 + exp(-0.170967 * PCA_set$SENTEK1)) * exp(0.044859 * PCA_set$Tair)
 
 test_AFPS_zero1 <- 138.130226 / (1 + exp(-0.170967 * PCA_set$SENTEK1)) * exp(0.040627 * 15)
 test_AFPS_zero2 <- 138.130226 / (1 + exp(-0.170967 * PCA_set$SENTEK1)) * exp(0.040627 * PCA_set$Tair)
 
-test_AFPS_zero1_c <- 135.7 / (1 + exp(-0.2747 * PCA_set$SENTEK1 + 0.9748)) * exp(0.04063 * 15)
-test_AFPS_zero2_c <- 135.7 / (1 + exp(-0.2747 * PCA_set$SENTEK1 + 0.9748)) * exp(0.04063 * PCA_set$Tair)
-
 ggplot(data = PCA_set, aes(x = SENTEK1, y = test_AFPS_zero1)) + geom_point() + geom_smooth(method = "loess", col = "red")
 
 ggplot(data = PCA_set) + 
-  geom_line(aes(x = SENTEK1, y = test_AFPS_zero1_c, color = "GPP = 0"), linewidth = 1) +
-  geom_point(aes(x = SENTEK1, y = test_AFPS_zero2_c, color = "GPP = 0, Tair = Tair")) +
+  geom_line(aes(x = SENTEK1, y = test_AFPS_zero1, color = "GPP = 0"), linewidth = 1) +
+  geom_point(aes(x = SENTEK1, y = test_AFPS_zero2, color = "GPP = 0, Tair = Tair")) +
   labs(
     x = "GWL [cm]",
     y = "NEE CO2 [kg day-1 ha-1]"
@@ -187,10 +189,10 @@ ggplot(data = PCA_set, aes(x = GWL, y = test2)) + geom_point() + geom_smooth(met
 
 #Experimentation model########################################
 test_values_limited <- list(
-  alpha = 0.178,
-  beta = 170.25,
-  gamma = 10,
-  omega = 0.053
+  alpha = 0.26,
+  beta = 97.6,
+  gamma = 0.039,
+  omega = 0.059
 )
 
 limited_model <- nls(NEE_CO2_MDS_small ~ alpha * GPP + ((beta * SENTEK1) / (gamma + SENTEK3)) * exp(omega * Tair),
@@ -210,11 +212,11 @@ ggplot(data = PCA_set, aes(x = SENTEK3, y = test4_zero)) + geom_point() + geom_s
 
 #######experiment with bellcurve##################################################
 test_values_parabolic <- list(
-  alpha = -0.002,
-  beta = 300,
+  alpha = 0.1,
+  beta = 135,
   gamma = 10,
   omega = 30,
-  epsilon = 0.055
+  epsilon = 0.059
 )
 
 
@@ -227,7 +229,14 @@ summary(parabolic_model)
 test_parabolic <- 0.007101 * PCA_set$GPP + 160.2 * exp(-0.5 * ((PCA_set$SENTEK1 - 31.58) / 27.59)^2) * exp(0.03764 * PCA_set$Tair)
 test_parabolic_zero <- 160.2 * exp(-0.5 * ((PCA_set$SENTEK1 - 31.58) / 27.59)^2) * exp(0.03764 * 15)
 
-ggplot(data = PCA_set, aes(x = SENTEK1, y = test_parabolic)) + geom_point() + geom_smooth(method = "loess", col = "red")
+test_parabolic <- -0.11 * PCA_set$GPP + 146.57 * exp(-0.5 * ((PCA_set$TENSIO3 - 12.24) / 14.32)^2) * exp(0.04258 * PCA_set$Tair)
+test_parabolic_zero <- 146.57 * exp(-0.5 * ((PCA_set$TENSIO3 - 12.24) / 14.32)^2) * exp(0.04258 * 15)
+
+
+ggplot(data = PCA_set, aes(x = SENTEK1, y = test_parabolic)) + geom_point() + 
+  #geom_smooth(method = "loess", col = "red") + 
+  geom_point(data = PCA_set, aes(x = TENSIO3, y = NEE_CO2_MDS_small, color = "blue"))
+
 ggplot(data = PCA_set, aes(x = SENTEK1, y = test_parabolic_zero)) + geom_point()
 
 summary(parabolic_model)
@@ -325,3 +334,10 @@ summary(onlyAFPS)
 summary(onlyTair)
 
 AIC(AFPS_model, noGPP, onlyAFPS, onlyTair)
+
+
+
+
+
+
+
