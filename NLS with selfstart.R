@@ -358,11 +358,11 @@ ggplot() +
   geom_point(aes(x = PCA_set$TENSIO2, y = PCA_set$NEE_CO2_MDS_small, color = "blue"))
 
 #Risidual check#####################################################################
-residuals <- residuals(fits_parabolic_T2)
+residuals <- residuals(fits_GWL)
 
 # Create plots to check residuals
 par(mfrow = c(2, 2))  # Set up a 2x2 grid for plots
-plot(predict(fits_parabolic_T2), residuals, xlab = "Fitted values", ylab = "Residuals", main = "Residuals vs Fitted")  # Residuals vs Fitted values
+plot(predict(fits_GWL), residuals, xlab = "Fitted values", ylab = "Residuals", main = "Residuals vs Fitted")  # Residuals vs Fitted values
 hist(residuals, xlab = "Residuals", main = "Histogram of Residuals")  # Histogram of residuals
 qqnorm(residuals, main = "Q-Q plot")  # Q-Q plot
 qqline(residuals)
