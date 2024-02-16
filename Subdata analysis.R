@@ -91,6 +91,19 @@ ggplot(extracted) +
     panel.background = element_rect(fill = "white", color = "black")
   )
 
+ggplot(extracted) +
+  geom_point(aes(x = GWL, y = NEE_CO2_MDS_small, color = SENTEK3)) +
+  #geom_point(aes(x = OWASIS, y = NEE_CO2_MDS_small, shape = "OWASIS", color = GWL)) +
+  scale_color_viridis(option = "turbo", trans = "reverse") +
+  labs(
+    x = "AFPS [mm]",
+    y = "NEE CO2 [kg day-1 ha-1]"
+  ) +
+  theme(
+    panel.border = element_rect(color = "black", fill = NA, size = 0.5),
+    panel.background = element_rect(fill = "white", color = "black")
+  )
+
 # Define the custom color gradient
 custom_colors <- c("black", "red", "yellow", "green")
 

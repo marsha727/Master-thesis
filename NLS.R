@@ -8,28 +8,6 @@ PCA_set <- readRDS("Langeweide/Statistics_file.rds")
 #remove first row
 PCA_set <- PCA_set[-1,]
 
-#Experimenting with the training and test data split############# 
-
-#creating interval by weekly
-num_intervals <- ceiling(nrow(PCA_set) / 7) 
-
-# Create indices for train and test intervals
-train_intervals <- seq(1, num_intervals, by = 2)  # Use every other 7-day interval for training
-test_intervals <- seq(2, num_intervals, by = 2)   # Use the remaining 7-day intervals for testing
-
-# Create train and test datasets
-train_indices <- unlist(sapply(train_intervals, function(i) seq((i-1)*7 + 1, min(i*7, nrow(PCA_set)))))
-test_indices <- unlist(sapply(test_intervals, function(i) seq((i-1)*7 + 1, min(i*7, nrow(PCA_set)))))
-
-train <- PCA_set[train_indices, c("NEE_CO2_MDS_small", "SENTEK1", "SENTEK3", "TENSIO2", "TENSIO3", "OWASIS", "GWL", "GPP", "Tair", "Tsoil_1_015")]
-y_test <- PCA_set[test_indices, "NEE_CO2_MDS_small"]
-testing <- PCA_set[test_indices, c("NEE_CO2_MDS_small", "SENTEK1", "SENTEK3", "TENSIO2", "TENSIO3", "OWASIS", "GWL", "GPP", "Tair", "Tsoil_1_015")]
-
-# Verify the dimensions of the resulting datasets
-dim(train)
-length(y_test)
-dim(testing)
-
 #I have several nls models
 
 #Original fit from Bart##################################################
@@ -44,11 +22,6 @@ initial_values <- list(
 WL_model <- nls(NEE_CO2_MDS_small ~ alpha * GPP + beta / (1 + exp(gamma * (GWL + c))) * exp(omega * Tair),
                 data = PCA_set,
                 start = initial_values
-)
-
-WL_noGPP_model <- nls(NEE_CO2_MDS_small ~ beta / (1 + exp(gamma * GWL)) * exp(omega * Tair),
-                      data = PCA_set,
-                      start = initial_values
 )
 
 summary(WL_model)
@@ -74,29 +47,6 @@ ggplot(data = PCA_set) +
   scale_color_manual(values = c("GPP = 0" = "black", "GPP = 0, Tair = Tair" = "tomato"))
 
   
-predict_train <- predict(WL_model, newdata = train)
-predict_test <- predict(WL_model, newdata = testing)
-
-train_residuals <- train$NEE_CO2_MDS_small - predict_train
-test_residuals <- testing$NEE_CO2_MDS_small - predict_test
-
-train_mse <- mean(train_residuals^2)
-test_mse <- mean(test_residuals^2)
-
-
-predict_NEE <- function(NEE){
-  predict(WL_model, newdata = data.frame(NEE = NEE_CO2_MDS_small))
-}
-
-train_control <- trainControl(method = "cv", k = 5) 
-model_caret <- train(NEE_CO2_MDS_small ~ predict_NEE(NEE),
-                     data = PCA_set,
-                     method = "nls",
-                     trControl = train_control
-                     )
-
-
-
 
 #AFPS model unaltered###############################################
 initial_values_AFPS <- list(
@@ -106,65 +56,100 @@ initial_values_AFPS <- list(
   omega = 0.059
 )
 
-initial_values_AFPS_c <- list(
-  alpha = 0.26,
-  beta = 97.3,
-  gamma = 0.039,
-  omega = 0.059,
-  c = 0.5
-)
-
 AFPS_model <- nls(NEE_CO2_MDS_small ~ alpha * GPP + beta / (1 + exp(-gamma * SENTEK1)) * exp(omega * Tair),
                   data = PCA_set,
                   start = initial_values_AFPS
 )
 
-AFPS_model_c <- nls(NEE_CO2_MDS_small ~ alpha * GPP + beta / (1 + exp(-gamma * (SENTEK1 + c))) * exp(omega * Tair),
-                  data = PCA_set,
-                  start = initial_values_AFPS_c
-)
-
 summary(AFPS_model)
-summary(AFPS_model_c)
 
-models <- list(AFPS_model, AFPS_model_c, WL_model)
-model_names <- c("AFPS_model", "AFPS_model_c", "WL_model")
+SENTEK1_model <- -0.011 * PCA_set$GPP + 138.1 / (1 + exp(-0.170967 * PCA_set$SENTEK1)) * exp(0.041 * PCA_set$Tair)
+SENTEK3_model <- -0.064 * PCA_set$GPP + 120.1 / (1 + exp(-0.278 * PCA_set$SENTEK3)) * exp(0.048 * PCA_set$Tair)
+TENSIO2_model <- -0.100 * PCA_set$GPP + 132.5 / (1 + exp(-0.800 * PCA_set$TENSIO2)) * exp(0.043 * PCA_set$Tair)
+TENSIO3_model <- -0.110 * PCA_set$GPP + 144.1 / (1 + exp(-0.598 * PCA_set$TENSIO3)) * exp(0.039 * PCA_set$Tair)
 
-aictab(cand.set = models, modnames = model_names)
+SENTEK1_zero1 <- 138.1 / (1 + exp(-0.170967 * PCA_set$SENTEK1)) * exp(0.041 * 15)
+SENTEK1_zero2 <- 138.1 / (1 + exp(-0.170967 * PCA_set$SENTEK1)) * exp(0.041 * PCA_set$Tair)
 
-test_AFPS <- -0.046132 * PCA_set$GPP + 135.7 / (1 + exp(-0.170967 * PCA_set$SENTEK1)) * exp(0.044859 * PCA_set$Tair)
+SENTEK3_zero1 <- 120.1 / (1 + exp(-0.278 * PCA_set$SENTEK3)) * exp(0.048 * 15)
+SENTEK3_zero2 <- 120.1 / (1 + exp(-0.278 * PCA_set$SENTEK3)) * exp(0.048 * PCA_set$Tair)
 
-test_AFPS_zero1 <- 138.130226 / (1 + exp(-0.170967 * PCA_set$SENTEK1)) * exp(0.040627 * 15)
-test_AFPS_zero2 <- 138.130226 / (1 + exp(-0.170967 * PCA_set$SENTEK1)) * exp(0.040627 * PCA_set$Tair)
+TENSIO2_zero1 <- 132.5 / (1 + exp(-0.800 * PCA_set$TENSIO2)) * exp(0.043 * 15)
+TENSIO2_zero2 <- 132.5 / (1 + exp(-0.800 * PCA_set$TENSIO2)) * exp(0.043 * PCA_set$Tair)
+  
+TENSIO3_zero1 <- 144.1 / (1 + exp(-0.598 * PCA_set$TENSIO3)) * exp(0.039 * 15)
+TENSIO3_zero2 <- 144.1 / (1 + exp(-0.598 * PCA_set$TENSIO3)) * exp(0.039 * PCA_set$Tair)
 
-ggplot(data = PCA_set, aes(x = SENTEK1, y = test_AFPS_zero1)) + geom_point() + geom_smooth(method = "loess", col = "red")
+ggplot(data = PCA_set, aes(x = SENTEK1, y = SENTEK1_model)) + geom_point() + geom_smooth(method = "loess", col = "red")
 
 ggplot(data = PCA_set) + 
-  geom_line(aes(x = SENTEK1, y = test_AFPS_zero1, color = "GPP = 0"), linewidth = 1) +
-  geom_point(aes(x = SENTEK1, y = test_AFPS_zero2, color = "GPP = 0, Tair = Tair")) +
+  geom_line(aes(x = SENTEK1, y = SENTEK1_zero1, color = "S1 GPP = 0"), linewidth = 1) +
+  geom_point(aes(x = SENTEK1, y = SENTEK1_zero2, color = "S1 GPP = 0, Tair = Tair")) +
+  geom_line(aes(x = SENTEK3, y = SENTEK3_zero1, color = "S3 GPP = 0"), linewidth = 1) +
+  geom_point(aes(x = SENTEK3, y = SENTEK3_zero2, color = "S3 GPP = 0, Tair = Tair")) +
   labs(
     x = "GWL [cm]",
-    y = "NEE CO2 [kg day-1 ha-1]"
+    y = "NEE CO2 [kg day-1 ha-1]",
+    colour = " "
   ) +
   theme(
     panel.border = element_rect(color = "black", fill = NA, size = 1),
     panel.background = element_rect(fill = "white", color = "black")
   ) +
-  scale_color_manual(values = c("GPP = 0" = "black", "GPP = 0, Tair = Tair" = "tomato"))
+  scale_color_manual(values = c("S1 GPP = 0" = "black", "S1 GPP = 0, Tair = Tair" = "tomato",
+                                "S3 GPP = 0" = "blue", "S3 GPP = 0, Tair = Tair" = "green"))
+
+ggplot(data = PCA_set) + 
+  geom_line(aes(x = TENSIO2, y = TENSIO2_zero1, color = "S1 GPP = 0"), linewidth = 1) +
+  geom_point(aes(x = TENSIO2, y = TENSIO2_zero2, color = "S1 GPP = 0, Tair = Tair")) +
+  geom_line(aes(x = TENSIO3, y = TENSIO3_zero1, color = "S3 GPP = 0"), linewidth = 1) +
+  geom_point(aes(x = TENSIO3, y = TENSIO3_zero2, color = "S3 GPP = 0, Tair = Tair")) +
+  labs(
+    x = "GWL [cm]",
+    y = "NEE CO2 [kg day-1 ha-1]",
+    colour = " "
+  ) +
+  theme(
+    panel.border = element_rect(color = "black", fill = NA, size = 1),
+    panel.background = element_rect(fill = "white", color = "black")
+  ) +
+  scale_color_manual(values = c("S1 GPP = 0" = "black", "S1 GPP = 0, Tair = Tair" = "tomato",
+                                "S3 GPP = 0" = "blue", "S3 GPP = 0, Tair = Tair" = "green"))
+
+ggplot(data = PCA_set) + 
+  geom_point(aes(x = SENTEK1, y = SENTEK1_zero2, color = "SENTEK GPP = 0, Tair = Tair"), 
+             shape = 16, size = 1) +
+  geom_point(aes(x = TENSIO2, y = TENSIO2_zero2, color = "TENSIO GPP = 0, Tair = Tair"), 
+             shape = 17, size = 1) +
+  geom_line(aes(x = SENTEK1, y = SENTEK1_zero1, linetype = "SENTEK GPP = 0"), 
+            color = "black", size = 1) +
+  geom_line(aes(x = TENSIO2, y = TENSIO2_zero1, linetype = "TENSIO GPP = 0"), 
+            color = "black", size = 1) +
+  labs(
+    x = "AFPS [mm]",
+    y = "NEE CO2 [kg day-1 ha-1]",
+    colour = " ",
+    linetype = " "
+  ) +
+  scale_color_manual(values = c("SENTEK GPP = 0, Tair = Tair" = "tomato", 
+                                "TENSIO GPP = 0, Tair = Tair" = "skyblue")) +
+  scale_linetype_manual(values = c("SENTEK GPP = 0" = "solid", 
+                                   "TENSIO GPP = 0" = "dotdash"),
+                        labels = c("SENTEK GPP = 0", "TENSIO GPP = 0")) +
+  theme(
+    panel.border = element_rect(color = "black", fill = NA, size = 1),
+    panel.background = element_rect(fill = "white", color = "black"),
+    legend.text = element_text(size = 8),
+    legend.margin = margin(0, 0.5, 0, 1, "mm")
+  ) +
+  guides(color = guide_legend(override.aes = list(shape = c(16, 17), linetype = c("solid", "dashed"))))
 
 
+ggplot() + geom_point(aes(x = PCA_set$NEE_CO2_MDS_small, y = SENTEK1_model)) + expand_limits(x=c(0,500), y=c(0,500))
+ggplot() + geom_point(aes(x = PCA_set$NEE_CO2_MDS_small, y = SENTEK3_model)) + expand_limits(x=c(0,500), y=c(0,500))
 
-predict_train <- predict(AFPS_model, newdata = train)
-predict_test <- predict(AFPS_model, newdata = testing)
-
-train_residuals <- train$NEE_CO2_MDS_small - predict_train
-test_residuals <- testing$NEE_CO2_MDS_small - predict_test
-
-train_mse <- mean(train_residuals^2)
-test_mse <- mean(test_residuals^2)
-
-
-
+ggplot() + geom_point(aes(x = PCA_set$SENTEK1, y = SENTEK1_model, color = "red"))
++ geom_point(aes(x = PCA_set$SENTEK1, y = PCA_set$NEE_CO2_MDS_small, color = "blue"))
 
 #extended model from Bart################################################
 initial_values2 <- list(
@@ -208,7 +193,7 @@ test4_zero <- ((149.538559 * PCA_set$SENTEK1) / (2.789256 + PCA_set$SENTEK1)) * 
 test4 <- ((152.26 * PCA_set$TENSIO3) / (0.64 + PCA_set$TENSIO3)) * exp(0.038909 * 15)
 
 ggplot(data = PCA_set, aes(x = SENTEK1, y = test4)) + geom_point() + geom_smooth(method = "loess", col = "red")
-ggplot(data = PCA_set, aes(x = SENTEK3, y = test4_zero)) + geom_point() + geom_smooth(method = "loess", col = "red")
+ggplot(data = PCA_set, aes(x = TENSIO2, y = TENSIO2_sat_zero1)) + geom_point() + geom_smooth(method = "loess", col = "red")
 
 #######experiment with bellcurve##################################################
 test_values_parabolic <- list(
