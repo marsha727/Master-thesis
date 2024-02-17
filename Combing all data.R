@@ -15,15 +15,15 @@ AFPS_TENSIO$TIMESTAMP <- as.POSIXct(AFPS_TENSIO$datetime, format = "%Y-%m-%d %H:
 
 #Integrate SENTEK + tensio over 60 cm ~ not perfect allignment
 AFPS_int_SENTEK <- AFPS_SENTEK %>% 
-  mutate(Probe1 = SWC_1_025 + SWC_1_035 + SWC_1_045 + SWC_1_055 + SWC_1_065) %>% 
-  mutate(Probe3= SWC_3_025 + SWC_3_035 + SWC_3_045 + SWC_3_055 + SWC_1_065)
+  mutate(SENTEK1 = SWC_1_025 + SWC_1_035 + SWC_1_045 + SWC_1_055 + SWC_1_065) %>% 
+  mutate(SENTEK3 = SWC_3_025 + SWC_3_035 + SWC_3_045 + SWC_3_055 + SWC_1_065)
 
 #This integrate TENSIO per halfhour
 AFPS_int_TENSIO <- AFPS_TENSIO %>% 
   group_by(datetime) %>% 
-  summarise(AFPS2 = sum(AFPS2), AFPS3 = sum(AFPS3))
+  summarise(TENSIO2 = sum(AFPS2), TENSIO3 = sum(AFPS3))
 
-#Extract only ET and EF
+#Extract only ET (mm) and EF (ratio)
 EF <- ET %>% 
   select(datetime, EF3)
 
@@ -33,7 +33,8 @@ ET_halfhour <- ET_halfhour %>%
 #Extract OWASIS and set time to 1am for merging later
 OWASIS <- OWASIS %>% 
   select(Date, MedianBBB) %>% 
-  rename(datetime = Date)
+  rename(datetime = Date,
+         OWASIS = MedianBBB)
 
 OWASIS$datetime <- as.POSIXct(OWASIS$datetime, format = "%Y-%m-%d")
 
