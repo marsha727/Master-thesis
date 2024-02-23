@@ -75,10 +75,27 @@ ggplot(extracted) +
 
 
 ggplot(extracted) +
-  geom_point(aes(x = SENTEK1, y = NEE_CO2_MDS_small, shape = "SENTEK1", color = GWL)) +
-  geom_point(aes(x = SENTEK3, y = NEE_CO2_MDS_small, shape = "SENTEK3", color = GWL)) +
+  #geom_point(aes(x = SENTEK1, y = NEE_CO2_MDS_small, shape = "SENTEK1", color = GWL)) +
+  #geom_point(aes(x = SENTEK3, y = NEE_CO2_MDS_small, shape = "SENTEK3", color = GWL)) +
   geom_point(aes(x = TENSIO2, y = NEE_CO2_MDS_small, shape = "TENSIO2", color = GWL)) +
   geom_point(aes(x = TENSIO3, y = NEE_CO2_MDS_small, shape = "TENSIO3", color = GWL)) +
+  #geom_point(aes(x = OWASIS, y = NEE_CO2_MDS_small, shape = "OWASIS", color = GWL)) +
+  scale_shape_manual(values = c(17, 25, 15, 22)) +
+  scale_color_viridis(option = "turbo", trans = "reverse") +
+  labs(
+    x = "AFPS [mm]",
+    y = "NEE CO2 [kg day-1 ha-1]"
+  ) +
+  theme(
+    panel.border = element_rect(color = "black", fill = NA, size = 0.5),
+    panel.background = element_rect(fill = "white", color = "black")
+  )
+
+ggplot(extracted) +
+  #geom_point(aes(x = SENTEK1, y = NEE_CO2_MDS_small, shape = "SENTEK1", color = GWL)) +
+  #geom_point(aes(x = SENTEK3, y = NEE_CO2_MDS_small, shape = "SENTEK3", color = GWL)) +
+  #geom_point(aes(x = GWL, y = NEE_CO2_MDS_small, shape = "TENSIO2", color = TENSIO2)) +
+  geom_point(aes(x = GWL, y = NEE_CO2_MDS_small, shape = "TENSIO3", color = TENSIO3)) +
   #geom_point(aes(x = OWASIS, y = NEE_CO2_MDS_small, shape = "OWASIS", color = GWL)) +
   scale_shape_manual(values = c(17, 25, 15, 22)) +
   scale_color_viridis(option = "turbo", trans = "reverse") +
