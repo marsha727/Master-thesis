@@ -1,8 +1,5 @@
 #Subscript for tensiometer interpolation
-
 library(tidyverse)
-library(readxl)
-library(splines)
 
 tensio <- read.csv("Datasets/LAW_TENS_2020-2023_clean.csv")
 Subset_Bodem_fysische_metingen <- read.csv2("MvG_Bodem_fysische_metingen.csv")
@@ -141,7 +138,7 @@ tensio_interp3 <- tensio_long3 %>%
   })
 
 
-#filter for combination of datasets
+#filter for combination of datasets rename columns
 tensio_interp2 <- tensio_interp2 %>% 
   select(date, depth, value.interp) %>% 
   rename(date_2 = date, depth_2 = depth, SMP_2 = value.interp)
@@ -155,7 +152,9 @@ tensio_interp3 <- tensio_interp3 %>%
 combine_tensio <- bind_cols(tensio_interp2, tensio_interp3)
 combine_tensio <- as.data.frame(combine_tensio)
 
-#Now perform the conversions
+#Now perform the conversions 
+
+#Matric potential from kPa to cmH20
 kPa_to_cmH2O <- function(x){
   ifelse(is.na(x), NA, x*10.1971623)
 }
@@ -182,7 +181,8 @@ a3 <- Subset_Bodem_fysische_metingen$a[3]
 n3 <- Subset_Bodem_fysische_metingen$n[3]
 m3 <- Subset_Bodem_fysische_metingen$m[3]
 
-#apply MvG function adjusted for interp depths
+#apply MvG function adjusted for interpolations depths
+#note that MvG paramaters is per larger layer
 SWC_TENSIO <- Tensiometer_cmH20 %>% 
   mutate(
     SWC2 = case_when(
@@ -199,7 +199,7 @@ SWC_TENSIO <- Tensiometer_cmH20 %>%
     )
   )
 
-#Now convert to AFPS (%)
+#Now convert to AFPS (%) using the saturated water content
 AFPS_tensio <- SWC_TENSIO %>% 
   mutate(
     AFPS2 = case_when(
@@ -216,7 +216,7 @@ AFPS_tensio <- SWC_TENSIO %>%
     )
   )
 
-#Convert AFPS to mm
+#Convert AFPS to mm by multiplying with total volume and max porosity
 AFPS_mm_tensio <- AFPS_tensio %>% 
   mutate(
     AFPS2_mm = case_when(
@@ -233,16 +233,6 @@ AFPS_mm_tensio <- AFPS_tensio %>%
     )
   )
 
-#This way just a test
-#Integrated_AFPS <- AFPS_mm_tensio %>% 
-  #group_by(date_2) %>% 
-  #summarise(AFPS_int2 = sum(AFPS2_mm), AFPS_int3 = sum(AFPS3_mm))
-
-#SWC jumps due to bodem fysische metingen
-#Test_SWC <- SWC_TENSIO %>% 
-  #group_by(depth_2) %>% 
-  #summarise(SWC2 = mean(SWC2), SWC3 = mean(SWC3))
-
 #Write to csv for analysis
 
 #clean some collumns out
@@ -250,13 +240,9 @@ AFPS_mm_tensio <- AFPS_mm_tensio %>%
   select(date_2, depth_2, AFPS2_mm, AFPS3_mm) %>% 
   rename(datetime = date_2, depth = depth_2, AFPS2 = AFPS2_mm, AFPS3 = AFPS3_mm)
 
-Integrated_AFPS <- Integrated_AFPS %>% 
-  rename(AFPS2 = AFPS_int2, AFPS3 = AFPS_int3)
 
-
-#write in RDS for APP to maintain POSIXct
+#write in RDS and CSV
 write_rds(AFPS_mm_tensio, file = "App/Langeweide_tensio_interpolated.rds")
-write_rds(Integrated_AFPS, file = "App/Langeweide_tensio_integrated.rds")
 
 AFPS_mm_tensio$datetime <- format(AFPS_mm_tensio$datetime, "%Y-%m-%d %H:%M:%S")
 
