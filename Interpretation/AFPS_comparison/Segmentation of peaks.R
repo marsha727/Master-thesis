@@ -1,11 +1,9 @@
 library(pracma)
 library(tidyverse)
-library(astsa)
-library(ggpubr)
 library(ggpmisc)
+library(reshape2)
 
-AFPS_int_TS <- read_rds("App/AFPS_int_TS.rds")
-
+AFPS_int_TS <- readRDS("App/AFPS_int_TS.rds")
 
 columns <- c("SENTEK1", "SENTEK3", "TENSIO2", "TENSIO3")
 
@@ -17,25 +15,13 @@ peak_T3 <- findpeaks(AFPS_int_TS$TENSIO3, minpeakheight = 17, minpeakdistance = 
 print(peak_T3)
 
 extracted_peaks <- lapply(1:nrow(peak_T3), function(i){
-  start_index <- peak_T3[i, 3]
-  end_index <- peak_T3[i, 4]
+  start_index <- peak_T3[i, 3] #the 3th row is the start index number
+  end_index <- peak_T3[i, 4] #the 4th is the end index number
   peaks_in_range <- AFPS_int_TS[start_index:end_index, ]
   print(peaks_in_range)
   
   # Convert datetime to numeric for time differences
   time_diff <- as.numeric(diff(peaks_in_range$datetime))
-  
-  # Calculate the slope for each column
-  slopes <- lapply(peaks_in_range[, -1], function(column) {
-    diff_column <- diff(column)
-    slope_column <- c(NA, diff_column / time_diff)
-    return(slope_column)
-  })
-  
-  for (j in seq_along(slopes)) {
-    col_name <- paste(names(peaks_in_range)[j + 1], "_slope", sep = "")
-    peaks_in_range[[col_name]] <- slopes[[j]]
-  }
   
   peaks_in_range$cycle_number <- i
   return(peaks_in_range)
@@ -43,6 +29,7 @@ extracted_peaks <- lapply(1:nrow(peak_T3), function(i){
 
 extracted_peaks_TS <- do.call(rbind, extracted_peaks)
 
+#Same style but this time row 2-3 = drying cycle
 drying_cycle <- lapply(1:nrow(peak_T3), function(i){
   drying <- peak_T3[i, 3]
   max <- peak_T3[i, 2]
@@ -75,6 +62,7 @@ extracted_peaks_TS <- extracted_peaks_TS %>%
 
 #Analysis of the data using ggplot and later on the correlaiton map
 
+#all data together still hysteresis or bad correlation
 ggplot(extracted_peaks_TS, aes(x = SENTEK1, y = TENSIO3 )) +
   stat_smooth(method = "lm", col = "red") +
   geom_point() +
@@ -85,6 +73,7 @@ ggplot(extracted_peaks_TS, aes(x = SENTEK1, y = TENSIO3 )) +
                    label.y = "top"
   )
  
+#Only the wetting cycles still not great
 ggplot(wetting_TS, aes(x = SENTEK1, y = TENSIO3)) +
   stat_smooth(method = "lm", col = "red") +
   geom_point() +
@@ -126,21 +115,7 @@ ggplot(extracted_peaks_TS) +
   theme_minimal()
 
 
-correlation_data <- extracted_peaks_TS %>%
-  group_by() %>%
-  summarise(correlation = cor(SENTEK1, TENSIO2, method = "spearman"))
-# Create a scatter plot with a single correlation coefficient for each cycle
-correlation_plot <- ggplot(extracted_peaks_TS, aes(x = SENTEK1, y = TENSIO2)) +
-  stat_smooth(method = "lm", col = "red") +
-  geom_point() +
-  geom_text(data = correlation_data, aes(x = Inf, y = -Inf, label = sprintf("R = %.2f", correlation)), vjust = 1, hjust = 1, size = 3)
-
-#stat correlation for plotting and computing stats
-correlation_plot + stat_correlation(mapping = use_label(c("R", "P")), 
-                                    size = 4, 
-                                    label.x = "left", 
-                                    label.y = "top"
-)
+#Create correlation plots per cycle
 
 subset_list <- extracted_peaks_TS %>%
   group_split(cycle)
