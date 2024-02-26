@@ -1,7 +1,10 @@
 library(tidyverse)
 library(astsa)
 
-AFPS_int_TS <- readRDS("App/AFPS_int_TS.rds")
+AFPS_int_TS <- readRDS("Langeweide/LAW_MS_ICOS.rds")
+
+AFPS_int_TS <- AFPS_int_TS %>% 
+  select(SENTEK1, SENTEK3, TENSIO2, TENSIO3, OWASIS)
 
 #some cross-correlation testing
 print(ccf(AFPS_int_TS$SENTEK3, AFPS_int_TS$TENSIO2))
@@ -10,9 +13,9 @@ lag2.plot(na.omit(AFPS_int_TS$OWASIS), na.omit(AFPS_int_TS$SENTEK1), max.lag = 4
 
 hist(AFPS_int_TS$TENSIO3)
 
-#correlaiton heat map
+#correlation heat map
 
-M <- cor(AFPS_int_TS[, 2:6], method = "spearman", use = "pairwise.complete.obs")
+M <- cor(AFPS_int_TS, method = "spearman", use = "pairwise.complete.obs")
 
 # Set both diagonal and upper triangular part to NA
 M[upper.tri(M)] <- NA
@@ -28,11 +31,6 @@ ggplot(melted_M, aes(Var1, Var2, fill = value)) +
   scale_fill_gradient2(low = "blue", mid = "white", high = "red", limits = c(-1, 1)) +
   theme_minimal() +
   labs(title = "Spearman Rank Correlation Heatmap")
-
-
-
-M <- cor.test(AFPS_int_TS$OWASIS, AFPS_int_TS$SENTEK3, method = "spearman")$p.value
-
 
 
 
