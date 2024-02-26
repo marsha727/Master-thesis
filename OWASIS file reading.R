@@ -3,10 +3,8 @@ library(stringr)
 library(dplyr)
 #do not load the tidyverse packages because that has conflicting functions with terra package
 
-Subset_Bodem_fysische_metingen <- read.csv2("Datasets/MvG_Bodem_fysische_metingen.csv")
-
 #This sets the paths where the data should be retrieved. The first one is just a folder for raster files
-#from OWASIS and the second one is a shapefile of footprint of EC towers
+#from OWASIS and the second one is a shapefile of footprint of EC towers and polder
 pathOWASISRast <-  "D:/R_master_thesis/Github/Master-thesis/Datasets/OWASIS/TIFF/groenehart/"
 pathTowers <- "D:/R_master_thesis/OWASIS/Shapefiles/LAW_parc.gpkg"
 pathPolders <- "D:/R_master_thesis/Github/Master-thesis/Datasets/OWASIS/Shapefiles/LAW_MS_ICOS_Tiwer_Path.shp"
@@ -29,17 +27,17 @@ OWASISAb[["Beschikbare.Bodemberging"]] <- list(Abbreviation="BBB",Units= "mm")
 OWASISAb[["Grondwaterstand"]] <- list(Abbreviation="GW",Units= "mm")
 OWASISAb[["Bodemvocht"]] <- list(Abbreviation="BV",Units= "mm")
 
-#I think this vect reads the shapefile and stores it for pTowers
+#this vect reads the shapefile and stores it for pTowers
 pTowers <- vect(pathTowers)
 pPolders <- vect(pathPolders)
 #empty list
 lTowi <- list()
-#create a sequence of dates
+#create a sequence of dates for analysis
 lDay <- seq.Date(as.Date("2022-04-02","%Y-%m-%d"),as.Date("2022-11-01","%Y-%m-%d"),by = "1 day")
 #A new data frame with day as variable
 df.owasis <- data.frame(day=lDay)
 
-#This taken the towers polygon (of polder) and than creates a buffer around this with 250 m
+#This taken the towers polygon (of polder and towers) and than creates a buffer around this with 250 m
 #cropped to pPolders so it will exclude the canal etc. that is outside the SSI
 polTowers1 <- buffer(pTowers,width=250)
 polTowers1 <- crop(polTowers1,pPolders)
@@ -175,54 +173,17 @@ for (date in lDay) {
 OWASIS_BBB_GW <- data.frame(
   Date = as.Date(lDay),
   
-  MeanBBB = sapply(mean_values_BBB, function(x) if (all(is.na(x))) NaN else mean(x)),
+  MeanBBB = sapply(mean_values_BBB, function(x) if (all(is.na(x))) NaN else x),
   StdevBBB = sapply(stdev_values_BBB, function(x) if (all(is.na(x))) NaN else x),
   MedianBBB = sapply(median_values_BBB, function(x) if (all(is.na(x))) NaN else x),
   MadBBB = sapply(mad_values_BBB, function(x) if(all(is.na(x))) NaN else x),
   
-  MeanGW = sapply(mean_values_GW, function(x) if (all(is.na(x))) NaN else mean(x)),
+  MeanGW = sapply(mean_values_GW, function(x) if (all(is.na(x))) NaN else x),
   StdevGW = sapply(stdev_values_GW, function(x) if (all(is.na(x))) NaN else x),
   MedianGW = sapply(median_values_GW, function(x) if (all(is.na(x))) NaN else x),
   MadGW = sapply(mad_values_GW, function(x) if(all(is.na(x))) NaN else x)
 )
 
-TPS_av = 0.695
-AHN_mNAP_mmv <- -1.97
-
-#calculation to WFPS
-OWASIS_BBB_GW <- OWASIS_BBB_GW %>% 
-  mutate(MedianGW_mmv = (MedianGW - (AHN_mNAP_mmv))) %>% 
-  mutate(MedianWFPS = (TPS_av * abs(MedianGW_mmv*1000)) - MedianBBB) %>% 
-  mutate(TPS_check = MedianBBB + MedianWFPS) %>% 
-  mutate(TPS = TPS_av * abs(MedianGW_mmv*1000))
-  #mutate(MedianBBB_p = MedianBBB / (TPS_av * abs(MedianGW_mmv*1000))) %>% 
-  #mutate(MedianWFPS = TPS_av - MedianBBB_p)
-
-#normalisation function excluding NA values
-min_max_normalize <- function(x){
-  (x - min(x, na.rm = TRUE)) / (max(x, na.rm = TRUE) - min(x, na.rm = TRUE))
-}
-
-#Perform normalization function on MedianBBB
-OWASIS_BBB_GW <- OWASIS_BBB_GW %>% 
-  mutate(MedianBBB_norm = min_max_normalize(MedianBBB)) %>% 
-  mutate(MedianWFPS_norm = min_max_normalize(MedianWFPS))
-
-#Some test plots
-ggplot(OWASIS_BBB_GW) +
-  geom_line(aes(x = Date, y = MedianBBB_norm))
-
-ggplot(OWASIS_BBB_GW) +
-  geom_point(aes(x = MedianBBB, y = MedianWFPS))
-
-ggplot(OWASIS_BBB_GW) +
-  geom_line(aes(x = Date, y = TPS))
-  
-ggplot(OWASIS_BBB_GW) +
-  geom_line(aes(x = Date, y = MedianGW))
-
-ggplot(OWASIS_BBB_GW) +
-  geom_line(aes(x = MedianGW_mmv, y = TPS))
 
 #just to visually check the variation
 ggplot(OWASIS_BBB_GW, aes(x = Date)) +
@@ -236,44 +197,6 @@ ggplot(OWASIS_BBB_GW, aes(x = Date)) +
        y = "BBB (mm)"
     )
 
-ggplot(OWASIS_BBB_GW, aes(x = Date)) +
-  geom_line(aes(y = MedianBBB), color = "blue") +
-  geom_line(aes(y = MedianWFPS), color = "red") +
-  labs(title = "BBB and WFPS",
-       x = "Date",
-       y = "Filled pore space (mm)") +
-  theme_minimal()
-
-ggplot(LAW_MS_ICOS, aes(x = datetime)) +
-  geom_point(aes(y = WL_1, color = "red"), size = 0.5) +
-  geom_point(aes(y = WL_2, color = "blue"), size = 0.5) +
-  geom_point(aes(y = WL_3, color = "green"), size = 0.5) 
-
-ggplot(OWASIS_BBB_GW, aes(x = Date)) +
-  geom_line(aes(y = MeanGW))
-
-
-#Some threshold investigation compared to meean MAD
-dates_with_large_MAD <- OWASIS_BBB$Date[OWASIS_BBB$MadBBB >= 2]
-print(dates_with_large_MAD)
-average_MAD <- mean(OWASIS_BBB$MadBBB, na.rm = TRUE)
-
-# Calculate mean and standard deviation for each pixel across all dates
-P_mean_values <- lapply(l.df.owasis$BBB, function(Pixel) {
-  P_mean_value <- mean(Pixel$LAW_MS_ICOS, na.rm = TRUE)
-  return(ifelse(is.nan(P_mean_value), NA, P_mean_value))
-})
-
-P_stdev_values <- lapply(l.df.owasis$BBB, function(Pixel) {
-  P_stdev_value <- sd(Pixel$LAW_MS_ICOS, na.rm = TRUE)
-  return(ifelse(is.nan(P_stdev_value), NA, P_stdev_value))
-})
-
-# Identify the name of the pixel with the maximum mean value
-max_mean_pixel_name <- names(P_mean_values)[which.max(P_mean_values)]
-
-# Identify the name of the pixel with the maximum standard deviation value
-max_stdev_pixel_name <- names(P_stdev_values)[which.max(P_stdev_values)]
 
 #extract buffer and pixel coordinates for analysis in GIS
 writeVector(polTowers1, "Transformed/buffer.shp", overwrite = TRUE )
@@ -283,5 +206,5 @@ writeRaster(ri01, "Transformed/rbuffer.tif", overwrite = TRUE)
 OWASIS_BBB_GW$Date <- format(OWASIS_BBB_GW$Date, format = "%Y-%m-%d")
 
 #write csv for the BBB files
-write.csv2(OWASIS_BBB_GW, file = "Transformed/Langeweide_OWASIS_BBB_500.csv", row.names = FALSE)
+write.csv2(OWASIS_BBB_GW, file = "Transformed/Langeweide_OWASIS_BBB.csv", row.names = FALSE)
 test_read <- read.csv2("Transformed/Langeweide_OWASIS_BBB.csv")
