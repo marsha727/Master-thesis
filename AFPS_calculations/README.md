@@ -11,4 +11,5 @@ The subfolders include the scripts that include calculations for each measuremen
   -  OWASIS: includes the a script that extracts the air-filled pore space values from the TIF files for the polder footprint, by calcuting the mean of a 3x3 pixel window.
 
 # Extra
-  -  Includes an additional OWASIS script that does not take a 3x3 window but a large polder
+  -  OWASIS original script: Includes an additional OWASIS script that does not take a 3x3 window but a large polder
+  -  AFPS profile: includes a script that creates a dataframe of the air-filled pore space per depth for more in depth analysis of the changes occuring per depth.
