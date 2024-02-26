@@ -1,11 +1,14 @@
-MSc Thesis
+# AFPS scripts
 
-In this repository i represent all the scripts that i used for my master thesis: Comparing soil moisture measurements from three techniques as an indicator for carbon fluxes of peatlands in The Netherlands
+The subfolders include the scripts that include calculations for each measurement:
+  -  Direct soil moisture sensors (SENTEK)
+  -  Tensiometers
+  -  OWASIS
 
-Overview:
-  -  AFPS calculations: includes all the calculations that were required to calculate the air-filled pore space from the measured values from the direct soil moisture sensors (SENTEK), the tensiometers and OWASIS measurements.
-  -  Evapotranspiration: includes the script used to filter the evapotranspiration measurements
-  -  Groundwater: includes the calculations used to calculated the groundwaterlevel in NAP
-  -  Combine_all_data: includes the scripts used to combine all the data into one dataset so it can be used for plotting and statistical analysis
-  -  Interpretation: includes the scripts that were used to create the plots as seen in the report
-  -  Non-linear regression: includes the script for the non-linear regression models and assessment of those models
+# Overview
+  -  SENTEK: the registered values are transformed back into scaled frequency (raw), and a linear correction is applied to calculate the water-filled pore space. The water-filled pore space is used to calculate the air-filled pore space, using the max water-filled pore space as the porosity.
+  -  TENSIOMETER: the soil matric potential is intropolated to create a continous dataset for each 1 cm of soil. The Mualum van Genuchten equation is applied to the interpolated values to retrieve the soil moisture content. The air-filled pore space is calculated from the soil moisture content using the saturated water content.
+  -  OWASIS: includes the a script that extracts the air-filled pore space values from the TIF files for the polder footprint, by calcuting the mean of a 3x3 pixel window.
+
+# Extra
+  -  Includes an additional OWASIS script that does not take a 3x3 window but a large polder
