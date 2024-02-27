@@ -1,5 +1,7 @@
 # MSc Thesis
 
+Marsha Rovers
+
 In this repository i represent all the scripts that i used for my master thesis: Comparing soil moisture measurements from three techniques as an indicator for carbon fluxes of peatlands in The Netherlands
 
 # Overview:
