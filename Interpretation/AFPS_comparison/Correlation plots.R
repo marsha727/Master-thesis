@@ -1,7 +1,7 @@
 library(tidyverse)
 library(astsa)
 
-AFPS_int_TS <- readRDS("Langeweide/LAW_MS_ICOS.rds")
+AFPS_int_TS <- readRDS("App/AFPS_int_TS.rds")
 
 AFPS_int_TS <- AFPS_int_TS %>% 
   select(SENTEK1, SENTEK3, TENSIO2, TENSIO3, OWASIS)
