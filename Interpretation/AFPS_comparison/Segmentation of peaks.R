@@ -89,10 +89,10 @@ ggplot(wetting_TS, aes(x = SENTEK1, y = TENSIO3)) +
 # Calculate correlation separately for each cycle
 correlation_data <- extracted_peaks_TS %>%
   group_by(cycle) %>%
-  summarise(correlation = cor(SENTEK1, TENSIO2, method = "pearson"))
+  summarise(correlation = cor(SENTEK3, TENSIO2, method = "spearman"))
 
 # Create a scatter plot with a single correlation coefficient for each cycle
-correlation_plot <- ggplot(extracted_peaks_TS, aes(x = SENTEK1, y = TENSIO2)) +
+correlation_plot <- ggplot(extracted_peaks_TS, aes(x = SENTEK3, y = TENSIO2)) +
   stat_smooth(method = "lm", col = "red") +
   geom_point() +
   labs(title = "Correlation per cycle") +
@@ -103,7 +103,8 @@ correlation_plot <- ggplot(extracted_peaks_TS, aes(x = SENTEK1, y = TENSIO2)) +
 correlation_plot + stat_correlation(mapping = use_label(c("R", "P")), 
                                     size = 4, 
                                     label.x = "left", 
-                                    label.y = "top"
+                                    label.y = "top",
+                                    method = "spearman"
                                     )
 
 ggplot(extracted_peaks_TS) +
